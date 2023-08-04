@@ -21,9 +21,8 @@ namespace cwt
     END_OF_FILE
   };
 
-  class token 
-  { 
-    public: 
+  struct token 
+  {  
       token(const token_type type, const std::string& lexeme, const std::size_t line) 
       : m_type(type), m_lexeme(lexeme), m_line(line) {}
 
@@ -39,7 +38,7 @@ namespace cwt
         s.append(m_literal);
         return s;
       }
-    private: 
+ 
       token_type m_type; 
       std::string m_lexeme; 
       std::size_t m_line;
