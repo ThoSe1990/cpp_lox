@@ -43,34 +43,23 @@ void run(const std::string& src)
   }
 }
 
-#include "ast_generator.hpp"
+#include "expr.hpp"
 
 int main(int argc, char** argv)
 {
+  cwt::expr_binary exp(
+    cwt::expr_unary(
+      cwt::token(cwt::token_type::MINUS, "-", 1),
+      cwt::expr_literal("123")
+    ),
+    cwt::token(cwt::token_type::STAR, "*", 1),
+    cwt::expr_grouping(
+      cwt::expr_literal("45.67")
+    )
+  );
 
-  cwt::expr_literal l1(std::string{"hello world"});
-  cwt::expr_literal l2(std::string{"world"});
-  cwt::token t(cwt::token_type::AND, "test", 1);
-  cwt::expr_assign ea (t, &l1);
-  cwt::expr_binary eb(&l1, t, &l2);
-  // std::unique_ptr<cwt::expr> expr =  std::make_unique<cwt::Binary>(
-  //   &l1, t, &l2
-  // );
   cwt::printer<std::string> p;
-  p.print(ea);
-  p.print(eb);
-  // e.accept(p);
+  p.print(exp);
 
   return 0;
-// if (argc == 1) {
-
-  // } else if (argc == 2) {
-  //   const std::string path{argv[1]};
-  //   std::cout << "reading: " << path << '\n';
-  //   run(readFile(path));
-  // } else {
-  //   std::cerr << "invalid argc given\n";
-  //   return -1;  
-  // }
-
 }
