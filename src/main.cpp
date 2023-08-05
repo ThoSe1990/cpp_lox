@@ -47,19 +47,28 @@ void run(const std::string& src)
 
 int main(int argc, char** argv)
 {
-  cwt::expr_binary exp(
-    cwt::expr_unary(
+  cwt::expression* l1 = new cwt::expr_literal("123");
+  cwt::expression* l2 = new cwt::expr_literal("45.67");
+
+  cwt::expression* unary = new cwt::expr_unary(
       cwt::token(cwt::token_type::MINUS, "-", 1),
-      cwt::expr_literal("123")
-    ),
+      l1
+    );
+
+  cwt::expression* gr = new cwt::expr_grouping(l2);
+
+  cwt::expr_binary exp(
+    unary,
     cwt::token(cwt::token_type::STAR, "*", 1),
-    cwt::expr_grouping(
-      cwt::expr_literal("45.67")
-    )
+    gr
   );
 
-  cwt::printer<std::string> p;
-  p.print(exp);
+  cwt::printer().print(exp);
+
+  // delete l1; 
+  // delete l2;
+  // delete unary;
+  // delete gr; 
 
   return 0;
 }
