@@ -47,17 +47,19 @@ void run(const std::string& src)
 
 int main(int argc, char** argv)
 {
-  cwt::expression* l1 = new cwt::expr_literal("123");
-  cwt::expression* l2 = new cwt::expr_literal("45.67");
+  using expr = cwt::expression<std::string>;
 
-  cwt::expression* unary = new cwt::expr_unary(
+  expr* l1 = new cwt::expr_literal<std::string>("123");
+  expr* l2 = new cwt::expr_literal<std::string>("45.67");
+
+  expr* unary = new cwt::expr_unary<std::string>(
       cwt::token(cwt::token_type::MINUS, "-", 1),
       l1
     );
 
-  cwt::expression* gr = new cwt::expr_grouping(l2);
+  expr* gr = new cwt::expr_grouping<std::string>(l2);
 
-  cwt::expr_binary exp(
+  cwt::expr_binary<std::string> exp(
     unary,
     cwt::token(cwt::token_type::STAR, "*", 1),
     gr

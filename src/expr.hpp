@@ -1,131 +1,144 @@
 namespace cwt
 {   
-  
-  struct expr_assign;
-  struct expr_binary;
-  struct expr_call;
-  struct expr_get;
-  struct expr_grouping;
-  struct expr_literal;
-  struct expr_logical;
-  struct expr_set;
-  struct expr_super;
-  struct expr_this;
-  struct expr_unary;
-  struct expr_variable;
 
+  template<typename T> struct expr_assign;
+  template<typename T> struct expr_binary;
+  template<typename T> struct expr_call;
+  template<typename T> struct expr_get;
+  template<typename T> struct expr_grouping;
+  template<typename T> struct expr_literal;
+  template<typename T> struct expr_logical;
+  template<typename T> struct expr_set;
+  template<typename T> struct expr_super;
+  template<typename T> struct expr_this;
+  template<typename T> struct expr_unary;
+  template<typename T> struct expr_variable;
+
+  template<typename T>
   struct visitor 
   {
     virtual ~visitor() = default;
-    virtual std::string visit(const expr_assign& e) const { return "not implemented"; }
-    virtual std::string visit(const expr_binary& e) const { return "not implemented"; }
-    virtual std::string visit(const expr_call& e) const { return "not implemented"; }
-    virtual std::string visit(const expr_get& e) const { return "not implemented"; }
-    virtual std::string visit(const expr_grouping& e) const { return "not implemented"; }
-    virtual std::string visit(const expr_literal& e) const { return "not implemented"; }
-    virtual std::string visit(const expr_logical& e) const { return "not implemented"; }
-    virtual std::string visit(const expr_set& e) const { return "not implemented"; }
-    virtual std::string visit(const expr_super& e) const { return "not implemented"; }
-    virtual std::string visit(const expr_this& e) const { return "not implemented"; }
-    virtual std::string visit(const expr_unary& e) const { return "not implemented"; }
-    virtual std::string visit(const expr_variable& e) const { return "not implemented"; }
+    virtual T visit(const expr_assign<T>& e) const { return "not implemented"; }
+    virtual T visit(const expr_binary<T>& e) const { return "not implemented"; }
+    virtual T visit(const expr_call<T>& e) const { return "not implemented"; }
+    virtual T visit(const expr_get<T>& e) const { return "not implemented"; }
+    virtual T visit(const expr_grouping<T>& e) const { return "not implemented"; }
+    virtual T visit(const expr_literal<T>& e) const { return "not implemented"; }
+    virtual T visit(const expr_logical<T>& e) const { return "not implemented"; }
+    virtual T visit(const expr_set<T>& e) const { return "not implemented"; }
+    virtual T visit(const expr_super<T>& e) const { return "not implemented"; }
+    virtual T visit(const expr_this<T>& e) const { return "not implemented"; }
+    virtual T visit(const expr_unary<T>& e) const { return "not implemented"; }
+    virtual T visit(const expr_variable<T>& e) const { return "not implemented"; }
   };
 
+  template<typename T>
   struct expression
   {
     virtual ~expression() = default;
-    virtual std::string accept(const visitor& v) const = 0;
+    virtual T accept(const visitor<T>& v) const = 0 ;
   };
 
-  struct expr_assign : public expression 
+  template<typename T> 
+  struct expr_assign : public expression<T>
   {
-    expr_assign(token op, expression* value) : op(op), value(value) {}
+    using expr_t = expression<T>;
+    expr_assign(token op, expr_t* value) : op(op), value(value) {}
     ~expr_assign()  
     {
       if (value) {delete value;}
     }
-    std::string accept(const visitor& v) const override
+    std::string accept(const visitor<T>& v) const override
     {
       return v.visit(*this);
     } 
 
     token op;
-    expression* value;
+    expr_t* value;
   };
 
-  struct expr_binary : public expression 
+  template<typename T>
+  struct expr_binary : public expression<T>
   {
-    expr_binary(expression* left, token op, expression* right) : left(left), op(op), right(right) {}
+    using expr_t = expression<T>;
+    expr_binary(expr_t* left, token op, expr_t* right) : left(left), op(op), right(right) {}
     ~expr_binary() 
     {
       if (left) {delete left;}
       if (right) {delete right;}
     }
-    std::string accept(const visitor& v) const override
+    std::string accept(const visitor<T>& v) const override
     {
       return v.visit(*this);
     }
-    expression* left;
+    expr_t* left;
     token op;
-    expression* right;
+    expr_t* right;
   };
 
-  struct expr_call : public expression 
+  template<typename T>
+  struct expr_call : public expression<T>
   {
-    expr_call(expression* callee, token paren, std::vector<expression*> args) : callee(callee), paren(paren), args(args) {}
+    using expr_t = expression<T>;
+    expr_call(expr_t* callee, token paren, std::vector<expr_t*> args) : callee(callee), paren(paren), args(args) {}
   	~expr_call()
     {
       if (callee) {delete callee;}
       for (auto e : args) {if (e) delete e;}
     }
-    std::string accept(const visitor& v) const override
+    std::string accept(const visitor<T>& v) const override
     {
       return v.visit(*this);
     }
 
-    expression* callee;
+    expr_t* callee;
     token paren;
-    std::vector<expression*> args; 
-
+    std::vector<expr_t*> args; 
   };
 
-  struct expr_get : public expression 
+  template<typename T>
+  struct expr_get : public expression<T>
   {
-    expr_get(expression* obj, token name) : obj(obj), name(name) {}
+    using expr_t = expression<T>;
+    expr_get(expr_t* obj, token name) : obj(obj), name(name) {}
     ~expr_get()
     {
       if (obj) { delete obj; }
     }
-    std::string accept(const visitor& v) const override
+    std::string accept(const visitor<T>& v) const override
     {
       return v.visit(*this);
     }
 
-    expression* obj;
+    expr_t* obj;
     token name; 
   };
 
-  struct expr_grouping : public expression 
+  template<typename T>
+  struct expr_grouping : public expression<T>
   {
-    expr_grouping(expression* expr) : expr(expr) {}
+    using expr_t = expression<T>;
+    expr_grouping(expr_t* expr) : expr(expr) {}
     ~expr_grouping()  
     {
       if (expr) {delete expr;}
     }
-    std::string accept(const visitor& v) const override
+    std::string accept(const visitor<T>& v) const override
     {
       return v.visit(*this);
     }
 
-    expression* expr;
+    expr_t* expr;
   };
 
-  struct expr_literal : public expression 
+  template<typename T>
+  struct expr_literal : public expression<T> 
   {
+    using expr_t = expression<T>;
     expr_literal(const std::string& value) : value(value) {}
     ~expr_literal(){}
 
-    std::string accept(const visitor& v) const override
+    std::string accept(const visitor<T>& v) const override
     {
       return v.visit(*this);
     }
@@ -133,47 +146,53 @@ namespace cwt
     std::string value;
   };
 
-  struct expr_logical : public expression 
+  template<typename T>
+  struct expr_logical : public expression<T>
   {
-    expr_logical(expression* left, token op, expression* right) : left(left), op(op), right(right) {}
+    using expr_t = expression<T>;
+    expr_logical(expr_t* left, token op, expr_t* right) : left(left), op(op), right(right) {}
     ~expr_logical() 
     {
       if (left) {delete left;}
       if (right) {delete right;}
     }
-    std::string accept(const visitor& v) const override
+    std::string accept(const visitor<T>& v) const override
     {
       return v.visit(*this);
     }
 
-    expression* left;
+    expr_t* left;
     token op;
-    expression* right;
+    expr_t* right;
   };
 
-  struct expr_set : public expression 
+  template<typename T>
+  struct expr_set : public expression<T> 
   {
-    expr_set(expression* obj, token name, expression* value) : obj(obj), name(name), value(value) {}
+    using expr_t = expression<T>;
+    expr_set(expr_t* obj, token name, expr_t* value) : obj(obj), name(name), value(value) {}
     ~expr_set() 
     {
       if (obj) { delete obj; }
       if (value) { delete value; }
     }
-    std::string accept(const visitor& v) const override
+    std::string accept(const visitor<T>& v) const override
     {
       return v.visit(*this);
     }
 
-    expression* obj;
+    expr_t* obj;
     token name; 
-    expression* value; 
+    expr_t* value; 
   };
 
-  struct expr_super : public expression 
+  template<typename T>
+  struct expr_super : public expression<T> 
   {
+    using expr_t = expression<T>;
     expr_super(token keyword, token method) : keyword(keyword), method(method) {}
     ~expr_super() = default;
-    std::string accept(const visitor& v) const override
+    std::string accept(const visitor<T>& v) const override
     {
       return v.visit(*this);
     }
@@ -182,12 +201,14 @@ namespace cwt
     token method;
   };
 
-  struct expr_this : public expression 
+  template<typename T>
+  struct expr_this : public expression<T> 
   {
+    using expr_t = expression<T>;
     expr_this(token keyword) : keyword(keyword) {}
     ~expr_this() = default;
 
-    std::string accept(const visitor& v) const override
+    std::string accept(const visitor<T>& v) const override
     {
       return v.visit(*this);
     }
@@ -195,28 +216,32 @@ namespace cwt
     token keyword;
   };
 
-  struct expr_unary : public expression 
+  template<typename T>
+  struct expr_unary : public expression<T> 
   {
-    expr_unary(token op, expression* right) : op(op), right(right) {}
+    using expr_t = expression<T>;
+    expr_unary(token op, expr_t* right) : op(op), right(right) {}
     ~expr_unary() 
     {
       if (right) {delete right;}
     }
 
-    std::string accept(const visitor& v) const override
+    std::string accept(const visitor<T>& v) const override
     {
       return v.visit(*this);
     }
 
     token op;
-    expression* right; 
+    expr_t* right; 
   };
 
-  struct expr_variable : public expression 
+  template<typename T>
+  struct expr_variable : public expression<T> 
   {
+    using expr_t = expression<T>;
     expr_variable(token name) : name(name) {}
 
-    std::string accept(const visitor& v) const override
+    std::string accept(const visitor<T>& v) const override
     {
       return v.visit(*this);
     }
@@ -226,39 +251,38 @@ namespace cwt
 
 
 
-
-  class printer : public visitor
+  class printer : public visitor<std::string>
   {
     public:
       ~printer() = default; 
-      void print(expression& expr) const
+      void print(expression<std::string>& expr) const
       {
         std:: cout<< expr.accept(*this) << std::endl;
       }
 
-      std::string visit(const expr_binary& e) const override
+      std::string visit(const expr_binary<std::string>& e) const override
       {
         return parenthesize(e.op.m_lexeme, *e.left, *e.right);
       }
 
-      std::string visit(const expr_grouping& e) const override
+      std::string visit(const expr_grouping<std::string>& e) const override
       {
         return parenthesize("group", *e.expr);
       }
 
-      std::string visit(const expr_literal& e) const override
+      std::string visit(const expr_literal<std::string>& e) const override
       {
         return e.value.empty() ? "nil" : e.value;
       }
 
-      std::string visit(const expr_unary& e) const override
+      std::string visit(const expr_unary<std::string>& e) const override
       {
         return parenthesize(e.op.m_lexeme, *e.right);
       }
 
     private:
 
-      std::string parenthesize(const expression& expr) const 
+      std::string parenthesize(const expression<std::string>& expr) const 
       {
         std::string s{' '};
         s.append(expr.accept(*this));
@@ -266,7 +290,7 @@ namespace cwt
       }
 
       template<typename... Exprs>
-      std::string parenthesize(const std::string& name, const expression& expr, const Exprs&... exprs) const 
+      std::string parenthesize(const std::string& name, const expression<std::string>& expr, const Exprs&... exprs) const 
       {
         std::string s{""};
         s.push_back('(');
@@ -276,7 +300,7 @@ namespace cwt
         s.push_back(')');
         return s;
       }
-      std::string parenthesize(const std::string& name, const expression& expr) const 
+      std::string parenthesize(const std::string& name, const expression<std::string>& expr) const 
       {   
         std::string s{""};
         s.push_back('(');
