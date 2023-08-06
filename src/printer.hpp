@@ -2,7 +2,7 @@
 
 namespace cwt
 {
-  class printer : public visitor<std::string>
+  class printer : public expr_visitor<std::string>
   {
     public:
       ~printer() = default; 

@@ -1,3 +1,5 @@
+#pragma once
+
 namespace cwt
 {   
 
@@ -15,28 +17,28 @@ namespace cwt
   template<typename T> struct expr_variable;
 
   template<typename T>
-  struct visitor 
+  struct expr_visitor 
   {
-    virtual ~visitor() = default;
-    virtual T visit(const expr_assign<T>& e) const { throw std::runtime_error("not implemented"); }
-    virtual T visit(const expr_binary<T>& e) const { throw std::runtime_error("not implemented"); }
-    virtual T visit(const expr_call<T>& e) const { throw std::runtime_error("not implemented"); }
-    virtual T visit(const expr_get<T>& e) const { throw std::runtime_error("not implemented"); }
-    virtual T visit(const expr_grouping<T>& e) const { throw std::runtime_error("not implemented"); }
-    virtual T visit(const expr_literal<T>& e) const { throw std::runtime_error("not implemented"); }
-    virtual T visit(const expr_logical<T>& e) const { throw std::runtime_error("not implemented"); }
-    virtual T visit(const expr_set<T>& e) const { throw std::runtime_error("not implemented"); }
-    virtual T visit(const expr_super<T>& e) const { throw std::runtime_error("not implemented"); }
-    virtual T visit(const expr_this<T>& e) const { throw std::runtime_error("not implemented"); }
-    virtual T visit(const expr_unary<T>& e) const { throw std::runtime_error("not implemented"); }
-    virtual T visit(const expr_variable<T>& e) const { throw std::runtime_error("not implemented"); }
+    virtual ~expr_visitor() = default;
+    virtual T visit(const expr_assign<T>& e) const { throw std::runtime_error("expr_visitor not implemented"); }
+    virtual T visit(const expr_binary<T>& e) const { throw std::runtime_error("expr_visitor not implemented"); }
+    virtual T visit(const expr_call<T>& e) const { throw std::runtime_error("expr_visitor not implemented"); }
+    virtual T visit(const expr_get<T>& e) const { throw std::runtime_error("expr_visitor not implemented"); }
+    virtual T visit(const expr_grouping<T>& e) const { throw std::runtime_error("expr_visitor not implemented"); }
+    virtual T visit(const expr_literal<T>& e) const { throw std::runtime_error("expr_visitor not implemented"); }
+    virtual T visit(const expr_logical<T>& e) const { throw std::runtime_error("expr_visitor not implemented"); }
+    virtual T visit(const expr_set<T>& e) const { throw std::runtime_error("expr_visitor not implemented"); }
+    virtual T visit(const expr_super<T>& e) const { throw std::runtime_error("expr_visitor not implemented"); }
+    virtual T visit(const expr_this<T>& e) const { throw std::runtime_error("expr_visitor not implemented"); }
+    virtual T visit(const expr_unary<T>& e) const { throw std::runtime_error("expr_visitor not implemented"); }
+    virtual T visit(const expr_variable<T>& e) const { throw std::runtime_error("expr_visitor not implemented"); }
   };
 
   template<typename T>
   struct expression
   {
     virtual ~expression() = default;
-    virtual T accept(const visitor<T>& v) const = 0 ;
+    virtual T accept(const expr_visitor<T>& v) const = 0 ;
   };
 
   template<typename T> 
@@ -48,7 +50,7 @@ namespace cwt
     {
       if (value) {delete value;}
     }
-    T accept(const visitor<T>& v) const override
+    T accept(const expr_visitor<T>& v) const override
     {
       return v.visit(*this);
     } 
@@ -67,7 +69,7 @@ namespace cwt
       if (left) {delete left;}
       if (right) {delete right;}
     }
-    T accept(const visitor<T>& v) const override
+    T accept(const expr_visitor<T>& v) const override
     {
       return v.visit(*this);
     }
@@ -80,13 +82,13 @@ namespace cwt
   struct expr_call : public expression<T>
   {
     using expr_t = expression<T>;
-    expr_call(expr_t* callee, token paren, std::vector<expr_t*> args) : callee(callee), paren(paren), args(args) {}
+    expr_call(expr_t* callee, token paren, const std::vector<expr_t*>& args) : callee(callee), paren(paren), args(args) {}
   	~expr_call()
     {
       if (callee) {delete callee;}
       for (auto e : args) {if (e) delete e;}
     }
-    T accept(const visitor<T>& v) const override
+    T accept(const expr_visitor<T>& v) const override
     {
       return v.visit(*this);
     }
@@ -105,7 +107,7 @@ namespace cwt
     {
       if (obj) { delete obj; }
     }
-    T accept(const visitor<T>& v) const override
+    T accept(const expr_visitor<T>& v) const override
     {
       return v.visit(*this);
     }
@@ -123,7 +125,7 @@ namespace cwt
     {
       if (expr) {delete expr;}
     }
-    T accept(const visitor<T>& v) const override
+    T accept(const expr_visitor<T>& v) const override
     {
       return v.visit(*this);
     }
@@ -134,12 +136,14 @@ namespace cwt
   template<typename T>
   struct expr_literal : public expression<T> 
   {
-    template<typename Value>
-    expr_literal(const Value& v) : value(v){}
+    expr_literal(bool v) : value(v) {}
+    expr_literal(double v) : value(v) {}
+    expr_literal(std::string v) : value(v) {}
     expr_literal() : value(lox_obj()) {}
-    ~expr_literal() = default;
 
-    T accept(const visitor<T>& v) const override
+    ~expr_literal() {}
+
+    T accept(const expr_visitor<T>& v) const override
     {
       return v.visit(*this);
     }
@@ -157,7 +161,7 @@ namespace cwt
       if (left) {delete left;}
       if (right) {delete right;}
     }
-    T accept(const visitor<T>& v) const override
+    T accept(const expr_visitor<T>& v) const override
     {
       return v.visit(*this);
     }
@@ -177,7 +181,7 @@ namespace cwt
       if (obj) { delete obj; }
       if (value) { delete value; }
     }
-    T accept(const visitor<T>& v) const override
+    T accept(const expr_visitor<T>& v) const override
     {
       return v.visit(*this);
     }
@@ -193,7 +197,7 @@ namespace cwt
     using expr_t = expression<T>;
     expr_super(token keyword, token method) : keyword(keyword), method(method) {}
     ~expr_super() = default;
-    T accept(const visitor<T>& v) const override
+    T accept(const expr_visitor<T>& v) const override
     {
       return v.visit(*this);
     }
@@ -209,7 +213,7 @@ namespace cwt
     expr_this(token keyword) : keyword(keyword) {}
     ~expr_this() = default;
 
-    T accept(const visitor<T>& v) const override
+    T accept(const expr_visitor<T>& v) const override
     {
       return v.visit(*this);
     }
@@ -227,7 +231,7 @@ namespace cwt
       if (right) {delete right;}
     }
 
-    T accept(const visitor<T>& v) const override
+    T accept(const expr_visitor<T>& v) const override
     {
       return v.visit(*this);
     }
@@ -242,7 +246,7 @@ namespace cwt
     using expr_t = expression<T>;
     expr_variable(token name) : name(name) {}
 
-    T accept(const visitor<T>& v) const override
+    T accept(const expr_visitor<T>& v) const override
     {
       return v.visit(*this);
     }

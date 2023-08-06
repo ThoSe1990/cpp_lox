@@ -7,24 +7,43 @@ namespace cwt
   {
     using value_t = T;
     using expr_t = expression<value_t>;
+    using stmt_t = statement<value_t>;
     
     public: 
       parser(const std::vector<token>& tokens) : m_tokens(tokens) {}
 
-      expr_t* parse() 
+      std::vector<stmt_t*> parse()
       {
-        try
+        std::vector<stmt_t*> statements;
+        while(!is_at_end())
         {
-          return expression();
+          statements.push_back(statement());
         }
-        catch(const std::exception& e)
-        {
-          std::cout << e.what() << '\n';
-          return nullptr;
-        }
+        return statements;
       }
 
     private:
+      stmt_t* statement()
+      {
+        if (match(token_type::PRINT)) { return print_statement(); }
+        return expression_statement();
+      }
+
+      stmt_t* print_statement()
+      {
+        expr_t* value = expression();
+        consume(token_type::SEMICOLON, "Expect \';\' after value.");
+  
+        return new stmt_print<value_t>(value);
+      }
+      
+      stmt_t* expression_statement()
+      {
+        expr_t* expr = expression();
+        consume(token_type::SEMICOLON, "Expect \';\' after expression.");
+        return new stmt_expression<value_t>(expr);
+      }
+
       expr_t* expression() 
       {
         return equality();

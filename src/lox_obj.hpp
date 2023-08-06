@@ -18,7 +18,7 @@ namespace cwt
       }
       lox_obj(std::string value) : m_nil(false)
       {
-        m_value = std::make_unique<_model<const std::string&>>(std::move(value));
+        m_value = std::make_unique<_model<std::string>>(std::move(value));
       }
       lox_obj(bool value) : m_nil(false)
       {

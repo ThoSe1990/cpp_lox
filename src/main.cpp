@@ -15,9 +15,9 @@ namespace cwt
 }
 
 #include "lox_obj.hpp"
-
 #include "scanner.hpp"
 #include "expr.hpp"
+#include "stmt.hpp"
 #include "printer.hpp"
 #include "parser.hpp"
 #include "interpreter.hpp"
@@ -65,22 +65,14 @@ void run(const std::string& src)
   std::vector<token> tokens = scanner.scan_tokens();
   
   {
-    parser<std::string> parser(tokens);
-    expression<std::string>* expr = parser.parse(); 
-
-    if (expr) {
-      printer().print(*expr);
-      delete expr;
-    }
-  }
-   std::cout << "\nresults in:\n\n";
-  {
     parser<lox_obj> parser(tokens);
-    expression<lox_obj>* expr = parser.parse(); 
-    if (expr) {
-      interpreter().interpret(*expr);
-      delete expr;
-    } 
+    std::vector<statement<lox_obj>*> statements = parser.parse(); 
+
+    if (statements.empty() == false)
+    {
+      interpreter().interpret(statements);
+      for (auto s : statements) { if (s) delete s; }
+    }
   }
 
 }

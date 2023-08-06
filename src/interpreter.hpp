@@ -2,22 +2,48 @@
 
 namespace cwt
 {
-  class interpreter : public visitor<lox_obj>
+  class interpreter : public expr_visitor<lox_obj>, public stmt_visitor<lox_obj>
   {
     using expr_t = expression<lox_obj>;
+    using stmt_t = statement<lox_obj>;
     public:
 
-      void interpret(const expr_t& e) 
+      // void interpret(const expr_t& e) 
+      // {
+      //   try
+      //   {
+      //     lox_obj v = evaluate(e);
+      //     std::cout << v.to_string() << '\n';
+      //   }
+      //   catch(const std::exception& e)
+      //   {
+      //     std::cerr << e.what() << '\n';
+      //   }
+      // }
+
+      void interpret(const std::vector<stmt_t*> statemets) 
       {
         try
         {
-          lox_obj v = evaluate(e);
-          std::cout << v.to_string() << '\n';
+          for (stmt_t* stmt : statemets)
+          {
+            execute(stmt);
+          }
         }
         catch(const std::exception& e)
         {
           std::cerr << e.what() << '\n';
         }
+      }
+
+      void visit(const stmt_expression<lox_obj>& s) const override 
+      {
+        evaluate(*s.expression);
+      }
+      void visit(const stmt_print<lox_obj>& s) const override 
+      {
+        lox_obj value = evaluate(*s.expression);
+        std::cout << value.to_string() << std::endl;
       }
 
       lox_obj visit(const expr_literal<lox_obj>& e) const override
@@ -90,6 +116,10 @@ namespace cwt
         }
       }
     private:
+      void execute(stmt_t* stmt)
+      {
+        stmt->accept(*this);
+      }
       lox_obj evaluate(const expr_t& e) const 
       {
         return e.accept(*this);
