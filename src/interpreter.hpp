@@ -7,20 +7,6 @@ namespace cwt
     using expr_t = expression<lox_obj>;
     using stmt_t = statement<lox_obj>;
     public:
-
-      // void interpret(const expr_t& e) 
-      // {
-      //   try
-      //   {
-      //     lox_obj v = evaluate(e);
-      //     std::cout << v.to_string() << '\n';
-      //   }
-      //   catch(const std::exception& e)
-      //   {
-      //     std::cerr << e.what() << '\n';
-      //   }
-      // }
-
       void interpret(const std::vector<stmt_t*> statemets) 
       {
         try
@@ -36,41 +22,59 @@ namespace cwt
         }
       }
 
-      void visit(const stmt_expression<lox_obj>& s) const override 
+      void visit(const stmt_expression<lox_obj>& s) override 
       {
-        evaluate(*s.expression);
+        evaluate(s.expression);
       }
-      void visit(const stmt_print<lox_obj>& s) const override 
+      void visit(const stmt_print<lox_obj>& s) override 
       {
-        lox_obj value = evaluate(*s.expression);
+        lox_obj value = evaluate(s.expression);
         std::cout << value.to_string() << std::endl;
       }
+      void visit(const stmt_var<lox_obj>& s) override
+      {
+        lox_obj value;
+        if (s.initializer)
+        {
+          value = evaluate(s.initializer);
+        }
+        m_env.define(s.name.lexeme, value);
+      }
 
-      lox_obj visit(const expr_literal<lox_obj>& e) const override
+      lox_obj visit(const expr_literal<lox_obj>& e) override
       {
         return create_another(e.value);
       }
 
-      lox_obj visit(const expr_grouping<lox_obj>& e) const  override
+      lox_obj visit(const expr_grouping<lox_obj>& e) override
       {
-        return evaluate(*e.expr);
+        return evaluate(e.expr);
       }
 
-      lox_obj visit(const expr_unary<lox_obj>& e) const override
+      lox_obj visit(const expr_unary<lox_obj>& e) override
       {
-        lox_obj right = evaluate(*e.right);
+        lox_obj right = evaluate(e.right);
         switch (e.op.type)
         {
           case token_type::BANG: return !is_truthy(right);
-          break;case token_type::MINUS: right = lox_obj(-1*right.number());
+          break;case token_type::MINUS: 
+          {
+            check_number_operand(e.op, right);
+            return lox_obj(-1*right.number());
+          }
         }
         return lox_obj(); // equivalent to null
       }
 
-      lox_obj visit(const expr_binary<lox_obj>& e) const override
+      lox_obj visit(const expr_variable<lox_obj>& e) override
       {
-        lox_obj left = evaluate(*e.left);
-        lox_obj right = evaluate(*e.right);
+        return create_another(m_env.get(e.name));
+      }
+
+      lox_obj visit(const expr_binary<lox_obj>& e) override
+      {
+        lox_obj left = evaluate(e.left);
+        lox_obj right = evaluate(e.right);
         switch (e.op.type)
         {
           case token_type::GREATER : 
@@ -120,11 +124,11 @@ namespace cwt
       {
         stmt->accept(*this);
       }
-      lox_obj evaluate(const expr_t& e) const 
+      lox_obj evaluate(expr_t* e)  
       {
-        return e.accept(*this);
+        return e->accept(*this);
       }
-      bool is_truthy(const lox_obj& obj) const 
+      bool is_truthy(const lox_obj& obj)  
       {
         if (obj.nil())
         {
@@ -187,5 +191,7 @@ namespace cwt
           runtime_error(op, " Operands must be a number.");
         }
       }
+    private:
+      environment m_env;
   };
 } // namespace cwt

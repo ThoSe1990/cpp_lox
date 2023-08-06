@@ -12,22 +12,40 @@ namespace cwt
       
       lox_obj() : m_nil(true) {}
 
-      lox_obj(double value) : m_nil(false)
+      template <typename T, typename std::enable_if_t<std::is_same_v<T, bool>>* = nullptr>
+      lox_obj(T value) : m_nil(false)
+      {
+          m_value = std::make_unique<_model<bool>>(std::move(value));
+      }
+
+      template <typename T, typename std::enable_if_t<std::is_same_v<typename std::decay<T>::type, std::string>>* = nullptr>
+      lox_obj(T value) : m_nil(false)
+      {
+          m_value = std::make_unique<_model<std::string>>(std::move(std::string{value}));
+      }
+
+      template <typename T, typename std::enable_if_t<std::is_same_v<T, const char*>>* = nullptr>
+      lox_obj(T value) : m_nil(false)
+      {
+          m_value = std::make_unique<_model<std::string>>(std::move(std::string{value}));
+      }
+
+      template <typename T, typename std::enable_if_t<std::is_arithmetic_v<T> && !std::is_same_v<T, bool>>* = nullptr>
+      lox_obj(T value) : m_nil(false)
       {
         m_value = std::make_unique<_model<double>>(std::move(value));
-      }
-      lox_obj(std::string value) : m_nil(false)
-      {
-        m_value = std::make_unique<_model<std::string>>(std::move(value));
-      }
-      lox_obj(bool value) : m_nil(false)
-      {
-        m_value = std::make_unique<_model<bool>>(std::move(value));
       }
 
       value_type type() const noexcept 
       { 
-        return m_value->type(); 
+        if (m_value) 
+        {
+          return m_value->type(); 
+        }
+        else 
+        {
+          return value_type::nil;
+        }
       };
       double number() const
       {

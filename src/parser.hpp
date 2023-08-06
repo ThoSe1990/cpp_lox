@@ -17,12 +17,45 @@ namespace cwt
         std::vector<stmt_t*> statements;
         while(!is_at_end())
         {
-          statements.push_back(statement());
+          statements.push_back(declaration());
         }
         return statements;
       }
 
     private:
+      
+      stmt_t* declaration()
+      {
+        try
+        {
+          if (match(token_type::VAR)) 
+          {
+            return var_declaration();
+          }
+          else 
+          {
+            return statement();
+          }
+        }
+        catch(const std::exception& e)
+        {
+          synchronize();
+          std::cerr << e.what() << '\n';
+          return nullptr;
+        }
+      }
+      
+      stmt_t* var_declaration()
+      {
+        token name = consume(token_type::IDENTIFIER, "Expected variable name.");
+        expr_t* initializer = nullptr;
+        if (match(token_type::EQUAL))
+        {
+          initializer = expression();
+        }
+        consume(token_type::SEMICOLON, "Expected \';\' after variable declaration");
+        return new stmt_var<value_t>(name, initializer);
+      }
       stmt_t* statement()
       {
         if (match(token_type::PRINT)) { return print_statement(); }
@@ -167,6 +200,10 @@ namespace cwt
         if (match(token_type::STRING))
         {
           return new expr_literal<value_t>(previous().literal);
+        }
+        if (match(token_type::IDENTIFIER))
+        {
+          return new expr_variable<value_t>(previous());
         }
         if (match(token_type::LEFT_PAREN))
         {

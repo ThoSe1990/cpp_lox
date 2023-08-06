@@ -17,22 +17,22 @@ namespace cwt
   struct stmt_visitor 
   {
     virtual ~stmt_visitor() = default;
-    virtual void visit(const stmt_block<T>& s) const { throw std::runtime_error("stmt_visitor not implemented"); }
-    virtual void visit(const stmt_class<T>& s) const { throw std::runtime_error("stmt_visitor not implemented"); }
-    virtual void visit(const stmt_expression<T>& s) const { throw std::runtime_error("stmt_visitor not implemented"); }
-    virtual void visit(const stmt_function<T>& s) const { throw std::runtime_error("stmt_visitor not implemented"); }
-    virtual void visit(const stmt_if<T>& s) const { throw std::runtime_error("stmt_visitor not implemented"); }
-    virtual void visit(const stmt_print<T>& s) const { throw std::runtime_error("stmt_visitor not implemented"); }
-    virtual void visit(const stmt_return<T>& s) const { throw std::runtime_error("stmt_visitor not implemented"); }
-    virtual void visit(const stmt_var<T>& s) const { throw std::runtime_error("stmt_visitor not implemented"); }
-    virtual void visit(const stmt_while<T>& s) const { throw std::runtime_error("stmt_visitor not implemented"); }
+    virtual void visit(const stmt_block<T>& s) { throw std::runtime_error("stmt_visitor not implemented"); }
+    virtual void visit(const stmt_class<T>& s) { throw std::runtime_error("stmt_visitor not implemented"); }
+    virtual void visit(const stmt_expression<T>& s) { throw std::runtime_error("stmt_visitor not implemented"); }
+    virtual void visit(const stmt_function<T>& s) { throw std::runtime_error("stmt_visitor not implemented"); }
+    virtual void visit(const stmt_if<T>& s) { throw std::runtime_error("stmt_visitor not implemented"); }
+    virtual void visit(const stmt_print<T>& s) { throw std::runtime_error("stmt_visitor not implemented"); }
+    virtual void visit(const stmt_return<T>& s) { throw std::runtime_error("stmt_visitor not implemented"); }
+    virtual void visit(const stmt_var<T>& s) { throw std::runtime_error("stmt_visitor not implemented"); }
+    virtual void visit(const stmt_while<T>& s) { throw std::runtime_error("stmt_visitor not implemented"); }
   };
 
   template<typename T>
   struct statement
   {
     virtual ~statement() = default;
-    virtual void accept(const stmt_visitor<T>& v) const = 0 ;
+    virtual void accept(stmt_visitor<T>& v) = 0 ;
   };
 
   template<typename T>
@@ -41,7 +41,7 @@ namespace cwt
     using stmt_t = statement<T>;
     
     stmt_block(const std::vector<stmt_t*>& statements) : statements(statements) {}
-    void accept(const stmt_visitor<T>& v) const override
+    void accept(stmt_visitor<T>& v) override
     {
       return v.visit(*this);
     }
@@ -58,7 +58,7 @@ namespace cwt
     stmt_class(token name, expr_t* superclass, const std::vector<func_t*>& methods) 
     : name(name), superclass(superclass), methods(methods) {}
 
-    void accept(const stmt_visitor<T>& v) const override
+    void accept(stmt_visitor<T>& v) override
     {
       return v.visit(*this);
     }
@@ -76,7 +76,7 @@ namespace cwt
 
     stmt_expression(expr_t* expression) : expression(expression) {}
 
-    void accept(const stmt_visitor<T>& v) const override
+    void accept( stmt_visitor<T>& v) override
     {
       return v.visit(*this);
     }
@@ -92,7 +92,7 @@ namespace cwt
     stmt_function(token name, const std::vector<token>& parameters, const std::vector<stmt_t*>& body) 
     : name(name), parameters(parameters), body(body) {}
     
-    void accept(const stmt_visitor<T>& v) const override
+    void accept( stmt_visitor<T>& v) override
     {
       return v.visit(*this);
     }
@@ -111,7 +111,7 @@ namespace cwt
     stmt_if(expr_t* condition, stmt_t* then_branch, stmt_t* else_branch) 
     : condition(condition), then_branch(then_branch), else_branch(else_branch) {}
     
-    void accept(const stmt_visitor<T>& v) const override
+    void accept( stmt_visitor<T>& v) override
     {
       return v.visit(*this);
     }
@@ -129,7 +129,7 @@ namespace cwt
     
     stmt_print(expr_t* expression) : expression(expression) {}
 
-    void accept(const stmt_visitor<T>& v) const override
+    void accept( stmt_visitor<T>& v) override
     {
       return v.visit(*this);
     }
@@ -146,7 +146,7 @@ namespace cwt
     stmt_return(token keyword, expr_t* value) 
     : keyword(keyword), value(value) {}
     
-    void accept(const stmt_visitor<T>& v) const override
+    void accept( stmt_visitor<T>& v) override
     {
       return v.visit(*this);
     }
@@ -164,7 +164,7 @@ namespace cwt
     stmt_var(token name, expr_t* initializer) 
     : name(name), initializer(initializer) {}
     
-    void accept(const stmt_visitor<T>& v) const override
+    void accept( stmt_visitor<T>& v) override
     {
       return v.visit(*this);
     }
@@ -182,7 +182,7 @@ namespace cwt
     stmt_while(expr_t* condition, stmt_t* body) 
     : condition(condition), body(body) {}
     
-    void accept(const stmt_visitor<T>& v) const override
+    void accept( stmt_visitor<T>& v) override
     {
       return v.visit(*this);
     }

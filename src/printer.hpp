@@ -6,34 +6,34 @@ namespace cwt
   {
     public:
       ~printer() = default; 
-      void print(expression<std::string>& expr) const
+      void print(expression<std::string>& expr)
       {
         std:: cout<< expr.accept(*this) << std::endl;
       }
 
-      std::string visit(const expr_binary<std::string>& e) const override
+      std::string visit(const expr_binary<std::string>& e) override
       {
         return parenthesize(e.op.lexeme, *e.left, *e.right);
       }
 
-      std::string visit(const expr_grouping<std::string>& e) const override
+      std::string visit(const expr_grouping<std::string>& e) override
       {
         return parenthesize("group", *e.expr);
       }
 
-      std::string visit(const expr_literal<std::string>& e) const override
+      std::string visit(const expr_literal<std::string>& e) override
       {
         return e.value.to_string();
       }
 
-      std::string visit(const expr_unary<std::string>& e) const override
+      std::string visit(const expr_unary<std::string>& e) override
       {
         return parenthesize(e.op.lexeme, *e.right);
       }
 
     private:
 
-      std::string parenthesize(const expression<std::string>& expr) const 
+      std::string parenthesize(expression<std::string>& expr) 
       {
         std::string s{' '};
         s.append(expr.accept(*this));
@@ -41,7 +41,7 @@ namespace cwt
       }
 
       template<typename... Exprs>
-      std::string parenthesize(const std::string& name, const expression<std::string>& expr, const Exprs&... exprs) const 
+      std::string parenthesize(const std::string& name, expression<std::string>& expr, Exprs&... exprs)  
       {
         std::string s{""};
         s.push_back('(');
@@ -51,7 +51,7 @@ namespace cwt
         s.push_back(')');
         return s;
       }
-      std::string parenthesize(const std::string& name, const expression<std::string>& expr) const 
+      std::string parenthesize(const std::string& name, expression<std::string>& expr)  
       {   
         std::string s{""};
         s.push_back('(');

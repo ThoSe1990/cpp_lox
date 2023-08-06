@@ -2,3 +2,9 @@
 print "hello world";
 print 1+23+3;
 print 1>2;
+
+var foo = 154;
+print foo;
+
+var bar = 20;
+print -bar - -100;

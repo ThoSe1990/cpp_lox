@@ -4,6 +4,8 @@
 #include <sstream>
 #include <vector>
 #include <memory>
+#include <type_traits>
+#include <unordered_map>
 
 #include "token.hpp"
 
@@ -15,6 +17,7 @@ namespace cwt
 }
 
 #include "lox_obj.hpp"
+#include "environment.hpp"
 #include "scanner.hpp"
 #include "expr.hpp"
 #include "stmt.hpp"
