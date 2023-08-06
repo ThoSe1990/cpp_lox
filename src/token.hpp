@@ -24,25 +24,25 @@ namespace cwt
   struct token 
   {  
       token(const token_type type, const std::string& lexeme, const std::size_t line) 
-      : m_type(type), m_lexeme(lexeme), m_line(line) {}
+      : type(type), lexeme(lexeme), line(line) {}
 
       token(const token_type type, const std::string& lexeme, const std::size_t line, const std::string& literal) 
-      : m_type(type), m_lexeme(lexeme), m_line(line), m_literal(literal) {}
+      : type(type), lexeme(lexeme), line(line), literal(literal) {}
 
       std::string to_string() const noexcept
       {
-        std::string s{std::to_string(static_cast<std::size_t>(m_type))};
+        std::string s{std::to_string(static_cast<std::size_t>(type))};
         s.append(" ");
-        s.append(m_lexeme);
+        s.append(lexeme);
         s.append(" ");
-        s.append(m_literal);
+        s.append(literal);
         return s;
       }
  
-      token_type m_type; 
-      std::string m_lexeme; 
-      std::size_t m_line;
-      std::string m_literal;
+      token_type type; 
+      std::string lexeme; 
+      std::size_t line;
+      std::string literal;
   };
 
 } // namespace cwt

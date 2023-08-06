@@ -64,7 +64,7 @@ namespace cwt
         }
         else 
         {
-          return peek().m_type == t;
+          return peek().type == t;
         }
       }
 
@@ -76,7 +76,7 @@ namespace cwt
 
       bool is_at_end() 
       {
-        return peek().m_type == token_type::END_OF_FILE;
+        return peek().type == token_type::END_OF_FILE;
       }
 
       token peek()
@@ -138,12 +138,16 @@ namespace cwt
 
       expr_t* primary()
       {
-        if (match(token_type::FALSE)) return new expr_literal<value_t>("false");
-        if (match(token_type::TRUE)) return new expr_literal<value_t>("true");
-        if (match(token_type::NIL)) return new expr_literal<value_t>("nil");
-        if (match(token_type::NUMBER, token_type::STRING))
+        if (match(token_type::FALSE)) return new expr_literal<value_t>(false);
+        if (match(token_type::TRUE)) return new expr_literal<value_t>(true);
+        if (match(token_type::NIL)) return new expr_literal<value_t>();
+        if (match(token_type::NUMBER))
         {
-          return new expr_literal<value_t>(previous().m_literal);
+          return new expr_literal<value_t>(std::stod(previous().literal));
+        }
+        if (match(token_type::STRING))
+        {
+          return new expr_literal<value_t>(previous().literal);
         }
         if (match(token_type::LEFT_PAREN))
         {
@@ -156,23 +160,24 @@ namespace cwt
 
       token consume(token_type type, const std::string& msg) 
       {
-        if(check(type)) return advance();
-        
+        if(check(type)) {
+          return advance();
+        }
         throw std::runtime_error(error(peek(), msg));
       }
 
       std::string error(token t, const std::string& msg) 
       {
-        if (t.m_type == token_type::END_OF_FILE) 
+        if (t.type == token_type::END_OF_FILE) 
         {
-          report(t.m_line, " at end ", msg);
+          report(t.line, " at end ", msg);
         }
         else 
         {
           std::string s{"at \' "};
-          s.append(t.m_lexeme);
+          s.append(t.lexeme);
           s.append("\'");
-          report(t.m_line, s, msg);
+          report(t.line, s, msg);
         }
         
         return msg; 
@@ -183,8 +188,8 @@ namespace cwt
         advance();
         while (!is_at_end())
         {
-          if (previous().m_type == token_type::SEMICOLON) return; 
-          switch (peek().m_type)
+          if (previous().type == token_type::SEMICOLON) return; 
+          switch (peek().type)
           {
           case token_type::CLASS :
           case token_type::FOR :

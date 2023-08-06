@@ -18,18 +18,18 @@ namespace cwt
   struct visitor 
   {
     virtual ~visitor() = default;
-    virtual T visit(const expr_assign<T>& e) const { return "not implemented"; }
-    virtual T visit(const expr_binary<T>& e) const { return "not implemented"; }
-    virtual T visit(const expr_call<T>& e) const { return "not implemented"; }
-    virtual T visit(const expr_get<T>& e) const { return "not implemented"; }
-    virtual T visit(const expr_grouping<T>& e) const { return "not implemented"; }
-    virtual T visit(const expr_literal<T>& e) const { return "not implemented"; }
-    virtual T visit(const expr_logical<T>& e) const { return "not implemented"; }
-    virtual T visit(const expr_set<T>& e) const { return "not implemented"; }
-    virtual T visit(const expr_super<T>& e) const { return "not implemented"; }
-    virtual T visit(const expr_this<T>& e) const { return "not implemented"; }
-    virtual T visit(const expr_unary<T>& e) const { return "not implemented"; }
-    virtual T visit(const expr_variable<T>& e) const { return "not implemented"; }
+    virtual T visit(const expr_assign<T>& e) const { throw std::runtime_error("not implemented"); }
+    virtual T visit(const expr_binary<T>& e) const { throw std::runtime_error("not implemented"); }
+    virtual T visit(const expr_call<T>& e) const { throw std::runtime_error("not implemented"); }
+    virtual T visit(const expr_get<T>& e) const { throw std::runtime_error("not implemented"); }
+    virtual T visit(const expr_grouping<T>& e) const { throw std::runtime_error("not implemented"); }
+    virtual T visit(const expr_literal<T>& e) const { throw std::runtime_error("not implemented"); }
+    virtual T visit(const expr_logical<T>& e) const { throw std::runtime_error("not implemented"); }
+    virtual T visit(const expr_set<T>& e) const { throw std::runtime_error("not implemented"); }
+    virtual T visit(const expr_super<T>& e) const { throw std::runtime_error("not implemented"); }
+    virtual T visit(const expr_this<T>& e) const { throw std::runtime_error("not implemented"); }
+    virtual T visit(const expr_unary<T>& e) const { throw std::runtime_error("not implemented"); }
+    virtual T visit(const expr_variable<T>& e) const { throw std::runtime_error("not implemented"); }
   };
 
   template<typename T>
@@ -48,7 +48,7 @@ namespace cwt
     {
       if (value) {delete value;}
     }
-    std::string accept(const visitor<T>& v) const override
+    T accept(const visitor<T>& v) const override
     {
       return v.visit(*this);
     } 
@@ -67,7 +67,7 @@ namespace cwt
       if (left) {delete left;}
       if (right) {delete right;}
     }
-    std::string accept(const visitor<T>& v) const override
+    T accept(const visitor<T>& v) const override
     {
       return v.visit(*this);
     }
@@ -86,7 +86,7 @@ namespace cwt
       if (callee) {delete callee;}
       for (auto e : args) {if (e) delete e;}
     }
-    std::string accept(const visitor<T>& v) const override
+    T accept(const visitor<T>& v) const override
     {
       return v.visit(*this);
     }
@@ -105,7 +105,7 @@ namespace cwt
     {
       if (obj) { delete obj; }
     }
-    std::string accept(const visitor<T>& v) const override
+    T accept(const visitor<T>& v) const override
     {
       return v.visit(*this);
     }
@@ -123,7 +123,7 @@ namespace cwt
     {
       if (expr) {delete expr;}
     }
-    std::string accept(const visitor<T>& v) const override
+    T accept(const visitor<T>& v) const override
     {
       return v.visit(*this);
     }
@@ -134,16 +134,17 @@ namespace cwt
   template<typename T>
   struct expr_literal : public expression<T> 
   {
-    using expr_t = expression<T>;
-    expr_literal(const std::string& value) : value(value) {}
-    ~expr_literal(){}
+    template<typename Value>
+    expr_literal(const Value& v) : value(v){}
+    expr_literal() : value(lox_obj()) {}
+    ~expr_literal() = default;
 
-    std::string accept(const visitor<T>& v) const override
+    T accept(const visitor<T>& v) const override
     {
       return v.visit(*this);
     }
-
-    std::string value;
+    
+    lox_obj value;
   };
 
   template<typename T>
@@ -156,7 +157,7 @@ namespace cwt
       if (left) {delete left;}
       if (right) {delete right;}
     }
-    std::string accept(const visitor<T>& v) const override
+    T accept(const visitor<T>& v) const override
     {
       return v.visit(*this);
     }
@@ -176,7 +177,7 @@ namespace cwt
       if (obj) { delete obj; }
       if (value) { delete value; }
     }
-    std::string accept(const visitor<T>& v) const override
+    T accept(const visitor<T>& v) const override
     {
       return v.visit(*this);
     }
@@ -192,7 +193,7 @@ namespace cwt
     using expr_t = expression<T>;
     expr_super(token keyword, token method) : keyword(keyword), method(method) {}
     ~expr_super() = default;
-    std::string accept(const visitor<T>& v) const override
+    T accept(const visitor<T>& v) const override
     {
       return v.visit(*this);
     }
@@ -208,7 +209,7 @@ namespace cwt
     expr_this(token keyword) : keyword(keyword) {}
     ~expr_this() = default;
 
-    std::string accept(const visitor<T>& v) const override
+    T accept(const visitor<T>& v) const override
     {
       return v.visit(*this);
     }
@@ -226,7 +227,7 @@ namespace cwt
       if (right) {delete right;}
     }
 
-    std::string accept(const visitor<T>& v) const override
+    T accept(const visitor<T>& v) const override
     {
       return v.visit(*this);
     }
@@ -241,75 +242,12 @@ namespace cwt
     using expr_t = expression<T>;
     expr_variable(token name) : name(name) {}
 
-    std::string accept(const visitor<T>& v) const override
+    T accept(const visitor<T>& v) const override
     {
       return v.visit(*this);
     }
 
     token name;
-  };
-
-
-
-  class printer : public visitor<std::string>
-  {
-    public:
-      ~printer() = default; 
-      void print(expression<std::string>& expr) const
-      {
-        std:: cout<< expr.accept(*this) << std::endl;
-      }
-
-      std::string visit(const expr_binary<std::string>& e) const override
-      {
-        return parenthesize(e.op.m_lexeme, *e.left, *e.right);
-      }
-
-      std::string visit(const expr_grouping<std::string>& e) const override
-      {
-        return parenthesize("group", *e.expr);
-      }
-
-      std::string visit(const expr_literal<std::string>& e) const override
-      {
-        return e.value.empty() ? "nil" : e.value;
-      }
-
-      std::string visit(const expr_unary<std::string>& e) const override
-      {
-        return parenthesize(e.op.m_lexeme, *e.right);
-      }
-
-    private:
-
-      std::string parenthesize(const expression<std::string>& expr) const 
-      {
-        std::string s{' '};
-        s.append(expr.accept(*this));
-        return s;
-      }
-
-      template<typename... Exprs>
-      std::string parenthesize(const std::string& name, const expression<std::string>& expr, const Exprs&... exprs) const 
-      {
-        std::string s{""};
-        s.push_back('(');
-        s.append(name);
-        s.append(parenthesize(expr));
-        s.append(parenthesize(exprs...));
-        s.push_back(')');
-        return s;
-      }
-      std::string parenthesize(const std::string& name, const expression<std::string>& expr) const 
-      {   
-        std::string s{""};
-        s.push_back('(');
-        s.append(name);
-        s.append(parenthesize(expr));
-        s.push_back(')');
-        return s;
-      }
-
   };
 
 } // namespace cwt
