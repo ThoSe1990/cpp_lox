@@ -15,25 +15,25 @@ namespace cwt
       template <typename T, typename std::enable_if_t<std::is_same_v<T, bool>>* = nullptr>
       lox_obj(T value) : m_nil(false)
       {
-          m_value = std::make_shared<_model<bool>>(std::move(value));
+          m_value = std::make_unique<_model<bool>>(std::move(value));
       }
 
       template <typename T, typename std::enable_if_t<std::is_same_v<typename std::decay<T>::type, std::string>>* = nullptr>
       lox_obj(T value) : m_nil(false)
       {
-          m_value = std::make_shared<_model<std::string>>(std::move(std::string{value}));
+          m_value = std::make_unique<_model<std::string>>(std::move(std::string{value}));
       }
 
       template <typename T, typename std::enable_if_t<std::is_same_v<T, const char*>>* = nullptr>
       lox_obj(T value) : m_nil(false)
       {
-          m_value = std::make_shared<_model<std::string>>(std::move(std::string{value}));
+          m_value = std::make_unique<_model<std::string>>(std::move(std::string{value}));
       }
 
       template <typename T, typename std::enable_if_t<std::is_arithmetic_v<T> && !std::is_same_v<T, bool>>* = nullptr>
       lox_obj(T value) : m_nil(false)
       {
-        m_value = std::make_shared<_model<double>>(std::move(value));
+        m_value = std::make_unique<_model<double>>(std::move(value));
       }
 
       value_type type() const noexcept 
@@ -112,7 +112,7 @@ namespace cwt
 
   private:
       bool m_nil;
-      std::shared_ptr<_concept> m_value;
+      std::unique_ptr<_concept> m_value;
   };
 
   lox_obj create_another(const lox_obj& old) 

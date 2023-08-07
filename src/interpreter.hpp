@@ -53,12 +53,12 @@ namespace cwt
         {
           value = evaluate(s.initializer);
         }
-        m_env.define(s.name.lexeme, value);
+        m_env->define(s.name.lexeme, value);
       }
       lox_obj visit(const expr_assign<lox_obj>& e) override
       {
         lox_obj value = evaluate(e.value);
-        m_env.assign(e.name, value);
+        m_env->assign(e.name, value);
         return create_another(value);
       }
 
@@ -90,7 +90,7 @@ namespace cwt
 
       lox_obj visit(const expr_variable<lox_obj>& e) override
       {
-        return create_another(m_env.get(e.name));
+        return create_another(m_env->get(e.name));
       }
 
       lox_obj visit(const expr_binary<lox_obj>& e) override
@@ -149,16 +149,16 @@ namespace cwt
 
       void execute_block(std::vector<stmt_t*> statements)
       {
-        environment prev = m_env;
+        std::unique_ptr<environment> prev = std::move(m_env);
         try
         {
           finally on_exit([this, &prev]()
           { 
-            m_env = prev; 
+            m_env = std::move(prev); 
           });
 
-          m_env = environment();
-          m_env.set_enclosing(&prev);
+          m_env = std::make_unique<environment>();
+          m_env->set_enclosing(prev.get());
 
           for(stmt_t* s : statements)
           {
@@ -240,6 +240,6 @@ namespace cwt
         }
       }
     private:
-      environment m_env;
+      std::unique_ptr<environment> m_env = std::make_unique<environment>();
   };
 } // namespace cwt
