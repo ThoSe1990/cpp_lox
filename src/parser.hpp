@@ -59,7 +59,8 @@ namespace cwt
       stmt_t* statement()
       {
         if (match(token_type::PRINT)) { return print_statement(); }
-        return expression_statement();
+        else if (match(token_type::LEFT_BRACE)) { return new stmt_block<value_t>(block()); }
+        else { return expression_statement(); }
       }
 
       stmt_t* print_statement()
@@ -77,10 +78,43 @@ namespace cwt
         return new stmt_expression<value_t>(expr);
       }
 
+      std::vector<stmt_t*> block()
+      {
+        std::vector<stmt_t*> statements; 
+
+        while (!check(token_type::RIGHT_BRACE) && !is_at_end())
+        {
+          statements.push_back(declaration());
+        }
+        consume(token_type::RIGHT_BRACE, "Expected \'}\' after block");
+        return statements;
+      }
+
       expr_t* expression() 
       {
-        return equality();
+        return assignment();
       }
+
+      expr_t* assignment()
+      {
+        expr_t* expr = equality();
+        if(match(token_type::EQUAL))
+        {
+          token equals = previous();
+          expr_t* value = assignment();
+          if(expr->type() == expr_type::_variable)
+          {
+            token name = static_cast<expr_variable<value_t>*>(expr)->name;
+            return new expr_assign(name,value);
+          }
+          else
+          {
+            error(equals, "Invalid assignment target.");
+          }
+        }
+        return expr;
+      }
+
       expr_t* equality() 
       {
         expr_t* expr = comparison();

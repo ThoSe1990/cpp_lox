@@ -8,3 +8,25 @@ print foo;
 
 var bar = 20;
 print -bar - -100;
+
+var baz = "some string";
+print baz + " 1846458 adsfhgdasfg ";
+
+
+baz = "something else now ... ";
+print baz;
+
+
+var a = "global a";
+print a;
+
+{
+  var a = "local a";
+  print a;
+  {
+    var a = "local local a";
+    print a;
+  }
+}
+
+print a;

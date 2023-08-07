@@ -6,6 +6,7 @@
 #include <memory>
 #include <type_traits>
 #include <unordered_map>
+#include <optional>
 
 #include "token.hpp"
 

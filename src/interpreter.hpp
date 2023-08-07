@@ -2,6 +2,17 @@
 
 namespace cwt
 {
+  template<typename Func> 
+  class finally 
+  {
+    public:
+      finally(Func&& func) : m_func(func) {}
+      ~finally() { m_func(); }
+    private:
+      Func m_func;
+  };
+
+
   class interpreter : public expr_visitor<lox_obj>, public stmt_visitor<lox_obj>
   {
     using expr_t = expression<lox_obj>;
@@ -22,6 +33,10 @@ namespace cwt
         }
       }
 
+      void visit(const stmt_block<lox_obj>& s) override 
+      {
+        execute_block(s.statements);
+      }
       void visit(const stmt_expression<lox_obj>& s) override 
       {
         evaluate(s.expression);
@@ -40,6 +55,13 @@ namespace cwt
         }
         m_env.define(s.name.lexeme, value);
       }
+      lox_obj visit(const expr_assign<lox_obj>& e) override
+      {
+        lox_obj value = evaluate(e.value);
+        m_env.assign(e.name, value);
+        return create_another(value);
+      }
+
 
       lox_obj visit(const expr_literal<lox_obj>& e) override
       {
@@ -124,6 +146,29 @@ namespace cwt
       {
         stmt->accept(*this);
       }
+
+      void execute_block(std::vector<stmt_t*> statements)
+      {
+        environment prev = std::move(m_env);
+        try
+        {
+          finally on_exit([this, &prev]()
+          { 
+            m_env = std::move(prev); 
+          });
+
+          m_env = environment();
+          for(stmt_t* s : statements)
+          {
+            execute(s);
+          }
+        }
+        catch(const std::exception& e)
+        {
+          std::cerr << e.what() << '\n';
+        }
+      }
+      
       lox_obj evaluate(expr_t* e)  
       {
         return e->accept(*this);

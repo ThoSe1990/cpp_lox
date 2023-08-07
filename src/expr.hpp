@@ -34,28 +34,35 @@ namespace cwt
     virtual T visit(const expr_variable<T>& e) { throw std::runtime_error("expr_visitor not implemented"); }
   };
 
+  enum class expr_type
+  {
+    _assign = 0, _binary, _call, _get, _grouping, _literal, _logical, _set, _super, _this, _unary, _variable
+  };
+
   template<typename T>
   struct expression
   {
     virtual ~expression() = default;
     virtual T accept(expr_visitor<T>& v) = 0 ;
+    virtual expr_type type() = 0;
   };
 
   template<typename T> 
   struct expr_assign : public expression<T>
   {
     using expr_t = expression<T>;
-    expr_assign(token op, expr_t* value) : op(op), value(value) {}
+    expr_assign(token name, expr_t* value) : name(name), value(value) {}
     ~expr_assign()  
     {
       if (value) {delete value;}
     }
+    expr_type type() { return expr_type::_assign; };
     T accept(expr_visitor<T>& v) override
     {
       return v.visit(*this);
     } 
 
-    token op;
+    token name;
     expr_t* value;
   };
 
@@ -69,6 +76,7 @@ namespace cwt
       if (left) {delete left;}
       if (right) {delete right;}
     }
+    expr_type type() { return expr_type::_binary; };
     T accept(expr_visitor<T>& v) override
     {
       return v.visit(*this);
@@ -88,6 +96,7 @@ namespace cwt
       if (callee) {delete callee;}
       for (auto e : args) {if (e) delete e;}
     }
+    expr_type type() { return expr_type::_call; };
     T accept(expr_visitor<T>& v) override
     {
       return v.visit(*this);
@@ -107,6 +116,7 @@ namespace cwt
     {
       if (obj) { delete obj; }
     }
+    expr_type type() { return expr_type::_get; };
     T accept(expr_visitor<T>& v) override
     {
       return v.visit(*this);
@@ -125,6 +135,7 @@ namespace cwt
     {
       if (expr) {delete expr;}
     }
+    expr_type type() { return expr_type::_grouping; };
     T accept(expr_visitor<T>& v) override
     {
       return v.visit(*this);
@@ -142,7 +153,7 @@ namespace cwt
     expr_literal() : value(lox_obj()) {}
 
     ~expr_literal() {}
-
+    expr_type type() { return expr_type::_literal; };
     T accept(expr_visitor<T>& v) override
     {
       return v.visit(*this);
@@ -161,6 +172,7 @@ namespace cwt
       if (left) {delete left;}
       if (right) {delete right;}
     }
+    expr_type type() { return expr_type::_logical; };
     T accept(expr_visitor<T>& v) override
     {
       return v.visit(*this);
@@ -181,6 +193,7 @@ namespace cwt
       if (obj) { delete obj; }
       if (value) { delete value; }
     }
+    expr_type type() { return expr_type::_set; };
     T accept(expr_visitor<T>& v) override
     {
       return v.visit(*this);
@@ -197,6 +210,7 @@ namespace cwt
     using expr_t = expression<T>;
     expr_super(token keyword, token method) : keyword(keyword), method(method) {}
     ~expr_super() = default;
+    expr_type type() { return expr_type::_super; };
     T accept(expr_visitor<T>& v) override
     {
       return v.visit(*this);
@@ -212,7 +226,7 @@ namespace cwt
     using expr_t = expression<T>;
     expr_this(token keyword) : keyword(keyword) {}
     ~expr_this() = default;
-
+    expr_type type() { return expr_type::_this; };
     T accept(expr_visitor<T>& v) override
     {
       return v.visit(*this);
@@ -230,7 +244,7 @@ namespace cwt
     {
       if (right) {delete right;}
     }
-
+    expr_type type() { return expr_type::_unary; };
     T accept(expr_visitor<T>& v) override
     {
       return v.visit(*this);
@@ -244,8 +258,9 @@ namespace cwt
   struct expr_variable : public expression<T> 
   {
     using expr_t = expression<T>;
+    using underlying_t = T;
     expr_variable(token name) : name(name) {}
-
+    expr_type type() { return expr_type::_variable; };
     T accept(expr_visitor<T>& v) override
     {
       return v.visit(*this);
