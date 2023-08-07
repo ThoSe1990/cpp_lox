@@ -149,15 +149,17 @@ namespace cwt
 
       void execute_block(std::vector<stmt_t*> statements)
       {
-        environment prev = std::move(m_env);
+        environment prev = m_env;
         try
         {
           finally on_exit([this, &prev]()
           { 
-            m_env = std::move(prev); 
+            m_env = prev; 
           });
 
           m_env = environment();
+          m_env.set_enclosing(&prev);
+
           for(stmt_t* s : statements)
           {
             execute(s);
@@ -169,6 +171,7 @@ namespace cwt
         }
       }
       
+
       lox_obj evaluate(expr_t* e)  
       {
         return e->accept(*this);

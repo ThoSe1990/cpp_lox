@@ -13,16 +13,19 @@ var baz = "some string";
 print baz + " 1846458 adsfhgdasfg ";
 
 
-baz = "something else now ... ";
+baz = "hello " + "world";
 print baz;
 
 
 var a = "global a";
 print a;
 
+var num = 2;
 {
+
   var a = "local a";
   print a;
+  print num;
   {
     var a = "local local a";
     print a;

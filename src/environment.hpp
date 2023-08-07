@@ -5,7 +5,12 @@ namespace cwt
   class environment
   {
     public:
-      
+
+      void set_enclosing(environment* env) 
+      {
+        m_enclosing = env;
+      }
+
       void define(const std::string& name, const lox_obj& value)
       {
         // this allows redefinition of variables, 
@@ -46,8 +51,7 @@ namespace cwt
         runtime_error(t, s);
       }
     private:
-    private:
       std::unordered_map<std::string, lox_obj> m_data;
-      std::unique_ptr<environment> m_enclosing;
+      environment* m_enclosing;
   };
 } // namespace cwt
