@@ -28,5 +28,14 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 endif()
 
 set(target example)
-add_executable(${target} ${PROJECT_SOURCE_DIR}/src/main.cpp)
+add_executable(${target} 
+${PROJECT_SOURCE_DIR}/src/main.cpp
+${PROJECT_SOURCE_DIR}/src/environment.cpp
+${PROJECT_SOURCE_DIR}/src/error.cpp
+${PROJECT_SOURCE_DIR}/src/interpreter.cpp
+${PROJECT_SOURCE_DIR}/src/lox_function.cpp
+${PROJECT_SOURCE_DIR}/src/lox_obj.cpp
+${PROJECT_SOURCE_DIR}/src/scanner.cpp
+${PROJECT_SOURCE_DIR}/src/token.cpp
+)
 target_include_directories(${target} PRIVATE ${PROJECT_SOURCE_DIR}/src)

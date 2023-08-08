@@ -1,7 +1,11 @@
 #pragma once
 
+#include "token.hpp"
+#include "lox_obj.hpp"
+
+
 namespace cwt
-{   
+{
 
   template<typename T> struct expr_assign;
   template<typename T> struct expr_binary;
@@ -83,7 +87,7 @@ namespace cwt
   struct expr_call : public lox_expression<T>
   {
     using expr_t = std::unique_ptr<lox_expression<T>>;
-    expr_call(expr_t callee, token paren, const std::vector<expr_t>& args) : callee(std::move(callee)), paren(paren), args(std::move(args)) {}
+    expr_call(expr_t callee, token paren, std::vector<expr_t> args) : callee(std::move(callee)), paren(paren), args(std::move(args)) {}
 
     expr_type type() { return expr_type::_call; };
     T accept(expr_visitor<T>& v) override
@@ -141,7 +145,7 @@ namespace cwt
       return v.visit(*this);
     }
     
-    lox_obj value;
+    T value;
   };
 
   template<typename T>

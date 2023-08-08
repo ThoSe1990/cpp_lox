@@ -1,8 +1,9 @@
 #pragma once
 
+#include "expr.hpp"
+
 namespace cwt
 {   
-
   template<typename T> struct stmt_block;
   template<typename T> struct stmt_class;
   template<typename T> struct stmt_expression;
@@ -32,7 +33,7 @@ namespace cwt
   struct lox_statement
   {
     virtual ~lox_statement() = default;
-    virtual void accept(stmt_visitor<T>& v) = 0 ;
+    virtual void accept(stmt_visitor<T>& v) = 0;
   };
 
   template<typename T>
@@ -89,8 +90,8 @@ namespace cwt
   {
     using stmt_t = std::unique_ptr<lox_statement<T>>;
     
-    stmt_function(token name, const std::vector<token>& parameters, const std::vector<stmt_t>& body) 
-    : name(name), parameters(parameters), body(body) {}
+    stmt_function(token name, const std::vector<token>& parameters, std::vector<stmt_t> body) 
+    : name(name), parameters(parameters), body(std::move(body)) {}
     
     void accept( stmt_visitor<T>& v) override
     {

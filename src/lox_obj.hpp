@@ -1,132 +1,70 @@
 #pragma once 
 
+#include <type_traits>
+#include <string>
+#include <memory>
+#include <stdexcept>
+
+#include "lox_function.hpp"
+
 namespace cwt
 {
   enum class value_type
   {
-    nil = 0, number, string, boolean
+    nil = 0, number, string, boolean, callable
   };
 
+  
   template<typename T>
-  struct _model_helper {
+  struct _model_helper 
+  {
     T m_value;
 
-    _model_helper(T const& value) : m_value(value) {}
+    _model_helper(const T& value) : m_value(value) {}
     value_type type() const noexcept { return value_type::nil; }
     std::string to_string() const noexcept { return "nil"; }
     double number() const { throw std::runtime_error("lox object does not hold a number"); }
     bool boolean() const { throw std::runtime_error("lox object does not hold a bool"); }
+    lox_function callable() const { throw std::runtime_error("lox object does not hold a function"); }
     std::string string() const { throw std::runtime_error("lox object does not hold a string"); }
   };
-
-  template<>
-  struct _model_helper<bool> {
-    bool m_value;
-
-    _model_helper(bool const& value) : m_value(value) {}
-    value_type type() const noexcept { return value_type::boolean; }
-    std::string to_string() const noexcept { return std::to_string(m_value); }
-    double number() const { throw std::runtime_error("lox object does not hold a number"); }
-    bool boolean() const { return m_value; }
-    std::string string() const { throw std::runtime_error("lox object does not hold a string"); }
-  };
-
-  template<>
-  struct _model_helper<double> {
-    double m_value;
-
-    _model_helper(double const& value) : m_value(value) {}
-    value_type type() const noexcept { return value_type::number; }
-    std::string to_string() const noexcept { return std::to_string(m_value); }
-    double number() const { return m_value; }
-    bool boolean() const { throw std::runtime_error("lox object does not hold a bool"); }
-    std::string string() const { throw std::runtime_error("lox object does not hold a string"); }
-  };
-
-  template<>
-  struct _model_helper<std::string> {
-    std::string m_value;
-
-    _model_helper(std::string const& value) : m_value(value) {}
-    value_type type() const noexcept { return value_type::string; }
-    std::string to_string() const noexcept { return m_value; }
-    double number() const { throw std::runtime_error("lox object does not hold a number"); }
-    bool boolean() const { throw std::runtime_error("lox object does not hold a bool"); }
-    std::string string() const { return m_value; }
-  };
-
-
+  
   class lox_obj 
   {
     public:
- 
-      
-      lox_obj() : m_nil(true) {}
+      lox_obj();
+
+      template <typename T, typename std::enable_if_t<std::is_same_v<T, lox_function>>* = nullptr>
+      lox_obj(T value);
 
       template <typename T, typename std::enable_if_t<std::is_same_v<T, bool>>* = nullptr>
-      lox_obj(T value) : m_nil(false)
-      {
-          m_value = std::make_unique<_model<bool>>(std::move(value));
-      }
+      lox_obj(T value);
 
       template <typename T, typename std::enable_if_t<std::is_same_v<typename std::decay<T>::type, std::string>>* = nullptr>
-      lox_obj(T value) : m_nil(false)
-      {
-          m_value = std::make_unique<_model<std::string>>(std::move(std::string{value}));
-      }
+      lox_obj(T value);
 
       template <typename T, typename std::enable_if_t<std::is_same_v<T, const char*>>* = nullptr>
-      lox_obj(T value) : m_nil(false)
-      {
-          m_value = std::make_unique<_model<std::string>>(std::move(std::string{value}));
-      }
+      lox_obj(T value);
 
       template <typename T, typename std::enable_if_t<std::is_arithmetic_v<T> && !std::is_same_v<T, bool>>* = nullptr>
-      lox_obj(T value) : m_nil(false)
-      {
-        m_value = std::make_unique<_model<double>>(std::move(value));
-      }
+      lox_obj(T value);
 
-      value_type type() const noexcept 
-      { 
-        if (m_value) 
-        {
-          return m_value->type(); 
-        }
-        else 
-        {
-          return value_type::nil;
-        }
-      };
-      double number() const
-      {
-        return m_value->number();
-      }
-      std::string string() const
-      {
-        return m_value->string();
-      }
-      bool boolean() const 
-      {
-        return m_value->boolean();
-      }   
-      bool nil() const
-      {
-        return m_nil;
-      }
-      std::string to_string() const
-      {
-        return m_value->to_string();
-      }
+      value_type type() const noexcept;
+      double number() const;
+      std::string string() const;
+      bool boolean() const;
+      lox_function callable() const;
+      bool nil() const;
+      std::string to_string() const;
 
   private:   
-
       struct _concept {
           virtual ~_concept() {}
           virtual value_type type() const noexcept { return value_type::nil; };
           virtual std::string to_string() const noexcept { return "nil"; };
           virtual double number() const { throw std::runtime_error("lox object does not hold a number"); };
           virtual bool boolean() const { throw std::runtime_error("lox object does not hold a bool"); };
+          virtual lox_function callable() const { throw std::runtime_error("lox object does not hold a function"); };
           virtual std::string string() const { throw std::runtime_error("lox object does not hold a string"); };
       };
 
@@ -140,6 +78,7 @@ namespace cwt
         std::string to_string() const noexcept override { return helper.to_string(); }
         double number() const override { return helper.number(); }
         bool boolean() const override { return helper.boolean(); }
+        lox_function callable() const { return helper.callable(); }
         std::string string() const override { return helper.string(); }
       };
 
@@ -148,15 +87,6 @@ namespace cwt
       std::unique_ptr<_concept> m_value;
   };
 
-  lox_obj create_another(const lox_obj& old) 
-  {
-    switch (old.type())
-    {
-    case value_type::boolean: return old.boolean();
-    break; case value_type::number: return old.number();
-    break; case value_type::string: return old.string();
-    default: return lox_obj(); // creates nil 
-    }
-  }
+  lox_obj create_another(const lox_obj& old) ;
 
 } // namespace cwt

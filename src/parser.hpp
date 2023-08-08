@@ -26,11 +26,16 @@ namespace cwt
       }
 
     private:
-      
       std::vector<stmt_t> declaration()
       {
         try
         {
+          if (match(token_type::FUN))
+          {
+            std::vector<stmt_t> v;
+            v.push_back(std::move(function("function")));
+            return v;
+          }
           if (match(token_type::VAR)) 
           {
             std::vector<stmt_t> v;
@@ -50,6 +55,36 @@ namespace cwt
         }
       }
       
+      stmt_t function(const std::string& kind) 
+      {
+        std::string s1{"Expected: "};
+        s1.append(kind);
+        s1.append(" name.");
+        token name = consume(token_type::IDENTIFIER, s1);
+        
+        std::string s2{"Expected \'(\' after "};
+        s2.append(kind);
+        s2.append(" name.");
+        consume(token_type::LEFT_PAREN, s2);
+
+        std::vector<token> parameters;
+        if (!check(token_type::RIGHT_PAREN))
+        {
+          do {
+            if (parameters.size() >= 255) { error(peek(), "Can't have more than 255 parameters."); }
+            parameters.push_back(consume(token_type::IDENTIFIER, "Expected parameter name"));
+          } while (match(token_type::COMMA));
+          consume(token_type::RIGHT_PAREN, "Expected \')\' after parameters.");
+
+          std::string s3{"Expected \'{\' before "};
+          s3.append(kind);
+          s3.append(" body.");
+          consume(token_type::LEFT_BRACE, s3);
+          std::vector<stmt_t> body = block();
+          return std::make_unique<stmt_function<value_t>>(name, parameters, std::move(body));
+        }
+      }
+
       stmt_t var_declaration()
       {
         token name = consume(token_type::IDENTIFIER, "Expected variable name.");
@@ -203,7 +238,6 @@ namespace cwt
           expr_t value = assignment();
           if(expr->type() == expr_type::_variable)
           {
-            
             token name = static_cast<expr_variable<value_t>*>(expr.get())->name;
             return std::make_unique<expr_assign<lox_obj>>(name, std::move(value));
           }
@@ -343,7 +377,40 @@ namespace cwt
           expr_t right = unary();
           return std::make_unique<expr_unary<value_t>>(op, std::move(right));
         }
-        return primary();
+        return call();
+      }
+
+      expr_t call() 
+      {
+        expr_t expr = primary();
+        while(true) 
+        {
+          if (match(token_type::LEFT_PAREN)) 
+          {
+            expr = finish_call(std::move(expr));
+          }
+          else 
+          {
+            break;
+          }
+        }
+        return std::move(expr);
+      }
+
+      expr_t finish_call(expr_t callee)
+      {
+        std::vector<expr_t> args;
+        if (!check(token_type::RIGHT_PAREN))
+        {
+          do { 
+            if (args.size() >= 255) {
+              error(peek(), "Can't have more than 255 arguments.");
+            }
+            args.push_back(expression()); 
+          } while (match(token_type::COMMA));
+        }
+        token paren = consume(token_type::RIGHT_PAREN, "Expected \')\' after arguments.");
+        return std::make_unique<expr_call<value_t>>(std::move(callee), paren, std::move(args));
       }
 
       expr_t primary()

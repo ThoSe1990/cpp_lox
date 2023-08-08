@@ -44,3 +44,9 @@ print "------------------------------";
   }
   print "for end";
 }
+
+fun hi(first, last)  {
+  print first + " " + last;
+}
+
+hi("hello","world");

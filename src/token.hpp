@@ -1,5 +1,7 @@
 #pragma once 
 
+#include <string>
+
 namespace cwt
 {
   enum class token_type {
@@ -23,21 +25,9 @@ namespace cwt
 
   struct token 
   {  
-      token(const token_type type, const std::string& lexeme, const std::size_t line) 
-      : type(type), lexeme(lexeme), line(line) {}
-
-      token(const token_type type, const std::string& lexeme, const std::size_t line, const std::string& literal) 
-      : type(type), lexeme(lexeme), line(line), literal(literal) {}
-
-      std::string to_string() const noexcept
-      {
-        std::string s{std::to_string(static_cast<std::size_t>(type))};
-        s.append(" ");
-        s.append(lexeme);
-        s.append(" ");
-        s.append(literal);
-        return s;
-      }
+      token(const token_type type, const std::string& lexeme, const std::size_t line);
+      token(const token_type type, const std::string& lexeme, const std::size_t line, const std::string& literal);
+      std::string to_string() const noexcept;
  
       token_type type; 
       std::string lexeme; 

@@ -8,48 +8,7 @@
 #include <unordered_map>
 #include <optional>
 
-#include "token.hpp"
 
-namespace cwt 
-{
-  void runtime_error(const token& t, const std::string& msg);
-  void report(const std::size_t line, const std::string& where, const std::string& msg);
-  void error(const std::size_t line, const std::string& msg);
-}
-
-#include "lox_obj.hpp"
-#include "environment.hpp"
-#include "scanner.hpp"
-#include "expr.hpp"
-#include "stmt.hpp"
-#include "printer.hpp"
-#include "parser.hpp"
-#include "interpreter.hpp"
-
-namespace cwt 
-{
-  bool has_error = false;
-  bool has_runtime_error = false; 
-
-  void runtime_error(const token& t, const std::string& msg)
-  {
-    std::string s{t.to_string()};
-    s.append(" Operands must be two numbers or two strings.");
-    has_runtime_error = true;
-    throw std::runtime_error(s);
-  }
-
-  void report(const std::size_t line, const std::string& where, const std::string& msg)
-  {
-    std::cerr << "[REPORT] " << where << ':' << line << ": " << msg << '\n';
-    has_error = true;
-  }
-
-  void error(const std::size_t line, const std::string& msg) 
-  {
-    report(line, "", msg);
-  }
-}
 
 std::string readFile(const std::string& filename) 
 {
@@ -60,7 +19,12 @@ std::string readFile(const std::string& filename)
 }
 
 
-
+#include "scanner.hpp"
+#include "token.hpp"
+#include "lox_obj.hpp"
+#include "stmt.hpp"
+#include "interpreter.hpp"
+#include "parser.hpp"
 
 void run(const std::string& src) 
 {
