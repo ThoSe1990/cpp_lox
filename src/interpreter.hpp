@@ -15,10 +15,11 @@ namespace cwt
 
   class interpreter : public expr_visitor<lox_obj>, public stmt_visitor<lox_obj>
   {
-    using expr_t = lox_expression<lox_obj>;
-    using stmt_t = lox_statement<lox_obj>;
+    using expr_t = std::unique_ptr<lox_expression<lox_obj>>;
+    using stmt_t = std::unique_ptr<lox_statement<lox_obj>>;
+    
     public:
-      void interpret(const std::vector<std::unique_ptr<stmt_t>>& statements) 
+      void interpret(const std::vector<stmt_t>& statements) 
       {
         try
         {
@@ -163,11 +164,11 @@ namespace cwt
         }
       }
     private:
-      void execute(const std::unique_ptr<stmt_t>& statement)
+      void execute(const stmt_t& statement)
       {
         statement->accept(*this);
       }
-      void execute(const std::vector<std::unique_ptr<stmt_t>>& statements)
+      void execute(const std::vector<stmt_t>& statements)
       {
         for (const auto& s : statements)
         {
@@ -175,7 +176,7 @@ namespace cwt
         }
       }
 
-      void execute_block(const std::vector<std::unique_ptr<stmt_t>>& statements)
+      void execute_block(const std::vector<stmt_t>& statements)
       {
         std::unique_ptr<environment> prev = std::move(m_env);
         try
@@ -196,7 +197,7 @@ namespace cwt
       }
       
 
-      lox_obj evaluate(const std::unique_ptr<expr_t>& e)  
+      lox_obj evaluate(const expr_t& e)  
       {
         return e->accept(*this);
       }

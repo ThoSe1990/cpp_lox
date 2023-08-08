@@ -6,15 +6,15 @@ namespace cwt
   class parser
   {
     using value_t = T;
-    using expr_t = lox_expression<value_t>;
-    using stmt_t = lox_statement<value_t>;
+    using expr_t = std::unique_ptr<lox_expression<value_t>>;
+    using stmt_t = std::unique_ptr<lox_statement<value_t>>;
     
     public: 
       parser(const std::vector<token>& tokens) : m_tokens(tokens) {}
 
-      std::vector<std::unique_ptr<stmt_t>> parse()
+      std::vector<stmt_t> parse()
       {
-        std::vector<std::unique_ptr<stmt_t>> statements;
+        std::vector<stmt_t> statements;
         while(!is_at_end())
         {
           for (auto& d : declaration()) 
@@ -27,13 +27,13 @@ namespace cwt
 
     private:
       
-      std::vector<std::unique_ptr<stmt_t>> declaration()
+      std::vector<stmt_t> declaration()
       {
         try
         {
           if (match(token_type::VAR)) 
           {
-            std::vector<std::unique_ptr<stmt_t>> v;
+            std::vector<stmt_t> v;
             v.push_back(std::move(var_declaration()));
             return v;
           }
@@ -50,10 +50,10 @@ namespace cwt
         }
       }
       
-      std::unique_ptr<stmt_t> var_declaration()
+      stmt_t var_declaration()
       {
         token name = consume(token_type::IDENTIFIER, "Expected variable name.");
-        std::unique_ptr<expr_t> initializer = nullptr;
+        expr_t initializer = nullptr;
         if (match(token_type::EQUAL))
         {
           initializer = expression();
@@ -61,36 +61,36 @@ namespace cwt
         consume(token_type::SEMICOLON, "Expected \';\' after variable declaration");
         return std::make_unique<stmt_var<value_t>>(name, std::move(initializer));
       }
-      std::vector<std::unique_ptr<stmt_t>> statement()
+      std::vector<stmt_t> statement()
       {
         if (match(token_type::PRINT)) 
         {   
-          std::vector<std::unique_ptr<stmt_t>> v;
+          std::vector<stmt_t> v;
           v.push_back(std::move(print_statement())); 
           return v; 
         }
         else if (match(token_type::IF)) 
         { 
-          std::vector<std::unique_ptr<stmt_t>> v;
+          std::vector<stmt_t> v;
           v.push_back(std::move(if_statement())); 
           return v;  
         }
         else if (match(token_type::LEFT_BRACE)) { return block(); }
         else 
         { 
-          std::vector<std::unique_ptr<stmt_t>> v;
+          std::vector<stmt_t> v;
           v.push_back(std::move(expression_statement())); 
           return v; 
         }
       }
 
-      std::unique_ptr<stmt_t> if_statement()
+      stmt_t if_statement()
       {
         consume(token_type::LEFT_PAREN, "Expect \'(\' after \'if\'.");
-        std::unique_ptr<expr_t> condition = expression();
+        expr_t condition = expression();
         consume(token_type::RIGHT_PAREN, "Expect \')\' after if condition.");
-        std::vector<std::unique_ptr<stmt_t>> then_branch = statement();
-        std::vector<std::unique_ptr<stmt_t>> else_branch{};
+        std::vector<stmt_t> then_branch = statement();
+        std::vector<stmt_t> else_branch{};
         if (match(token_type::ELSE))
         {
           else_branch = statement();
@@ -98,24 +98,24 @@ namespace cwt
         return std::make_unique<stmt_if<value_t>>(std::move(condition), std::move(then_branch), std::move(else_branch));
       }
 
-      std::unique_ptr<stmt_t> print_statement()
+      stmt_t print_statement()
       {
-        std::unique_ptr<expr_t> value = expression();
+        expr_t value = expression();
         consume(token_type::SEMICOLON, "Expect \';\' after value.");
   
         return std::make_unique<stmt_print<value_t>>(std::move(value));
       }
       
-      std::unique_ptr<stmt_t> expression_statement()
+      stmt_t expression_statement()
       {
-        std::unique_ptr<expr_t> expr = expression();
+        expr_t expr = expression();
         consume(token_type::SEMICOLON, "Expect \';\' after expression.");
         return std::make_unique<stmt_expression<value_t>>(std::move(expr));
       }
 
-      std::vector<std::unique_ptr<stmt_t>> block()
+      std::vector<stmt_t> block()
       {
-        std::vector<std::unique_ptr<stmt_t>> statements; 
+        std::vector<stmt_t> statements; 
 
         while (!check(token_type::RIGHT_BRACE) && !is_at_end())
         {
@@ -128,18 +128,18 @@ namespace cwt
         return statements;
       }
 
-      std::unique_ptr<expr_t> expression() 
+      expr_t expression() 
       {
         return assignment();
       }
 
-      std::unique_ptr<expr_t> assignment()
+      expr_t assignment()
       {
-        std::unique_ptr<expr_t> expr = or_operator();
+        expr_t expr = or_operator();
         if(match(token_type::EQUAL))
         {
           token equals = previous();
-          std::unique_ptr<expr_t> value = assignment();
+          expr_t value = assignment();
           if(expr->type() == expr_type::_variable)
           {
             
@@ -155,36 +155,36 @@ namespace cwt
       }
 
       
-      std::unique_ptr<expr_t> or_operator() 
+      expr_t or_operator() 
       {
-        std::unique_ptr<expr_t> expr = and_operator();
+        expr_t expr = and_operator();
         while(match(token_type::OR))
         {
           token op = previous();
-          std::unique_ptr<expr_t> right = and_operator();
+          expr_t right = and_operator();
           expr = std::make_unique<expr_logical<value_t>>(std::move(expr), op, std::move(right));
         }
         return std::move(expr);
       }
-      std::unique_ptr<expr_t> and_operator() 
+      expr_t and_operator() 
       {
-        std::unique_ptr<expr_t> expr = equality();
+        expr_t expr = equality();
         while (match(token_type::AND))
         {
           token op = previous();
-          std::unique_ptr<expr_t> right = equality();
+          expr_t right = equality();
           expr = std::make_unique<expr_logical<value_t>>(std::move(expr), op, std::move(right));
         }
         return std::move(expr);
       }
       
-      std::unique_ptr<expr_t> equality() 
+      expr_t equality() 
       {
-        std::unique_ptr<expr_t> expr = comparison();
+        expr_t expr = comparison();
         while (match(token_type::BANG_EQUAL, token_type::EQUAL_EQUAL))
         {
           token op = previous();
-          std::unique_ptr<expr_t> right = comparison();
+          expr_t right = comparison();
           expr = std::make_unique<expr_binary<value_t>>(std::move(expr), op, std::move(right));
         }
         return expr; 
@@ -238,54 +238,54 @@ namespace cwt
         return m_tokens[m_current-1];
       }
 
-      std::unique_ptr<expr_t> comparison()
+      expr_t comparison()
       {
-        std::unique_ptr<expr_t> expr = term();
+        expr_t expr = term();
         while(match(token_type::GREATER, token_type::GREATER_EQUAL, token_type::LESS, token_type::LESS_EQUAL))
         {
           token op = previous();
-          std::unique_ptr<expr_t> right = term();
+          expr_t right = term();
           expr = std::make_unique<cwt::expr_binary<value_t>>(std::move(expr), op, std::move(right));
         }
         return expr;
       }
 
-      std::unique_ptr<expr_t> term()
+      expr_t term()
       {
-        std::unique_ptr<expr_t> expr = factor();
+        expr_t expr = factor();
         while(match(token_type::MINUS, token_type::PLUS))
         {
           token op = previous();
-          std::unique_ptr<expr_t> right = factor();
+          expr_t right = factor();
           expr = std::make_unique<expr_binary<value_t>>(std::move(expr), op, std::move(right));
         }
         return expr; 
       }
 
-      std::unique_ptr<expr_t> factor()
+      expr_t factor()
       {
-        std::unique_ptr<expr_t> expr = unary();
+        expr_t expr = unary();
         while (match(token_type::SLASH, token_type::STAR))
         {
           token op = previous();
-          std::unique_ptr<expr_t> right = unary();
+          expr_t right = unary();
           expr = std::make_unique<expr_binary<value_t>>(std::move(expr), op, std::move(right));
         }
         return expr; 
       }
 
-      std::unique_ptr<expr_t> unary()
+      expr_t unary()
       {
         if (match(token_type::BANG, token_type::MINUS))
         {
           token op = previous();
-          std::unique_ptr<expr_t> right = unary();
+          expr_t right = unary();
           return std::make_unique<expr_unary<value_t>>(op, std::move(right));
         }
         return primary();
       }
 
-      std::unique_ptr<expr_t> primary()
+      expr_t primary()
       {
         if (match(token_type::FALSE)) return std::make_unique<expr_literal<value_t>>(false);
         if (match(token_type::TRUE)) return std::make_unique<expr_literal<value_t>>(true);
@@ -304,7 +304,7 @@ namespace cwt
         }
         if (match(token_type::LEFT_PAREN))
         {
-          std::unique_ptr<expr_t> expr = expression();
+          expr_t expr = expression();
           consume(token_type::RIGHT_PAREN, "Expect: \')\' after expression.");
           return std::make_unique<expr_grouping<value_t>>(std::move(expr));
         }
