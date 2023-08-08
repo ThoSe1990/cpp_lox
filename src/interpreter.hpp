@@ -64,6 +64,15 @@ namespace cwt
         }
         m_env->define(s.name.lexeme, value);
       }
+      void visit(const stmt_while<lox_obj>& s) override
+      {
+        while (is_truthy(evaluate(s.condition)))
+        {
+          execute(s.body);
+        }
+      }
+
+
       lox_obj visit(const expr_assign<lox_obj>& e) override
       {
         lox_obj value = evaluate(e.value);

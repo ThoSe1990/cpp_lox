@@ -40,7 +40,7 @@ namespace cwt
   {
     using stmt_t = std::unique_ptr<lox_statement<T>>;
     
-    stmt_block(const std::vector<stmt_t>& statements) : statements(std::move(statements)) {}
+    stmt_block(std::vector<stmt_t> statements) : statements(std::move(statements)) {}
     void accept(stmt_visitor<T>& v) override
     {
       return v.visit(*this);
@@ -179,7 +179,7 @@ namespace cwt
     using stmt_t = std::unique_ptr<lox_statement<T>>;
     using expr_t = std::unique_ptr<lox_expression<T>>;
 
-    stmt_while(expr_t condition, stmt_t body) 
+    stmt_while(expr_t condition, std::vector<stmt_t> body) 
     : condition(std::move(condition)), body(std::move(body)) {}
     
     void accept( stmt_visitor<T>& v) override
@@ -188,7 +188,7 @@ namespace cwt
     }
 
     expr_t condition;
-    stmt_t body;
+    std::vector<stmt_t> body;
   };
 
 

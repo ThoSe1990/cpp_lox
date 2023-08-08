@@ -64,10 +64,22 @@ namespace cwt
       std::vector<stmt_t> statement()
       {
         if (match(token_type::PRINT)) 
-        {   
+        {
           std::vector<stmt_t> v;
           v.push_back(std::move(print_statement())); 
           return v; 
+        }
+        else if (match(token_type::WHILE)) 
+        { 
+          std::vector<stmt_t> v;
+          v.push_back(std::move(while_statement())); 
+          return v;
+        }
+        else if (match(token_type::FOR)) 
+        {
+          std::vector<stmt_t> v;
+          v.push_back(std::move(for_statement())); 
+          return v;
         }
         else if (match(token_type::IF)) 
         { 
@@ -76,12 +88,61 @@ namespace cwt
           return v;  
         }
         else if (match(token_type::LEFT_BRACE)) { return block(); }
-        else 
-        { 
-          std::vector<stmt_t> v;
-          v.push_back(std::move(expression_statement())); 
-          return v; 
+
+        std::vector<stmt_t> v;
+        v.push_back(std::move(expression_statement())); 
+        return v; 
+      }
+
+      stmt_t for_statement()
+      {
+        consume(token_type::LEFT_PAREN, "Expect \'(\' after \'for\'.");
+        stmt_t initializer; 
+        if (match(token_type::SEMICOLON)) { initializer = nullptr; }
+        else if (match(token_type::VAR)) { initializer = var_declaration(); }
+        else { initializer = expression_statement(); }
+
+        expr_t condition = nullptr; 
+        if (!check(token_type::SEMICOLON)) { condition = expression(); }
+        consume(token_type::SEMICOLON ,"Expect \';\' after loop condition.");
+        
+        expr_t increment = nullptr;
+        if (!check(token_type::RIGHT_PAREN)) { increment = expression(); }
+        consume(token_type::RIGHT_PAREN, "Expect \')\' after for clause.");
+
+        std::vector<stmt_t> body = statement();
+
+        if (increment) 
+        {
+          body.push_back(std::make_unique<stmt_expression<value_t>>(std::move(increment)));
         }
+        if (condition == nullptr) 
+        { 
+          condition = std::make_unique<expr_literal<value_t>>(true); 
+        }
+
+        auto while_loop = std::make_unique<stmt_while<value_t>>(std::move(condition), std::move(body));
+        if (initializer)
+        {
+          std::vector<stmt_t> for_loop; 
+          for_loop.reserve(2);
+          for_loop.push_back(std::move(initializer));
+          for_loop.push_back(std::move(while_loop));
+          return std::make_unique<stmt_block<value_t>>(std::move(for_loop));
+        }
+        else 
+        {
+          return std::move(while_loop);
+        }
+      }
+
+      stmt_t while_statement()
+      {
+        consume(token_type::LEFT_PAREN, "Expect \'(\' after \'while\'.");
+        expr_t condition = expression();
+        consume(token_type::RIGHT_PAREN, "Expect \')\' after condition in while.");
+        std::vector<stmt_t> body = statement();
+        return std::make_unique<stmt_while<value_t>>(std::move(condition), std::move(body));
       }
 
       stmt_t if_statement()
