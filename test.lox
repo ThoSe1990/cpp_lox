@@ -16,3 +16,8 @@ var a = "global a";
     print "some more here .. " + a;
   }
 }
+
+print "------------------------------";
+
+print "hi" or 2;
+print nil or "first was nil!";

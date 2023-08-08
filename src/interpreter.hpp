@@ -18,14 +18,11 @@ namespace cwt
     using expr_t = lox_expression<lox_obj>;
     using stmt_t = lox_statement<lox_obj>;
     public:
-      void interpret(const std::vector<std::unique_ptr<stmt_t>>& statemets) 
+      void interpret(const std::vector<std::unique_ptr<stmt_t>>& statements) 
       {
         try
         {
-          for (const auto& stmt : statemets)
-          {
-            execute(stmt);
-          }
+          execute(statements);
         }
         catch(const std::exception& e)
         {
@@ -40,6 +37,17 @@ namespace cwt
       void visit(const stmt_expression<lox_obj>& s) override 
       {
         evaluate(s.expression);
+      }
+      void visit(const stmt_if<lox_obj>& s) override
+      {
+        if (is_truthy(evaluate(s.condition)))
+        {
+          execute(s.then_branch);
+        }
+        else if (!s.else_branch.empty()) 
+        {
+          execute(s.else_branch);
+        }
       }
       void visit(const stmt_print<lox_obj>& s) override 
       {
@@ -62,10 +70,23 @@ namespace cwt
         return create_another(value);
       }
 
-
       lox_obj visit(const expr_literal<lox_obj>& e) override
       {
         return create_another(e.value);
+      }
+
+      lox_obj visit(const expr_logical<lox_obj>& e) override 
+      {
+        lox_obj left = evaluate(e.left);
+        if (e.op.type == token_type::OR)
+        {
+          if (is_truthy(left)) { return left; }
+        }
+        else 
+        {
+          if (!is_truthy(left)) { return left; }
+        }
+        return evaluate(e.right);
       }
 
       lox_obj visit(const expr_grouping<lox_obj>& e) override
@@ -142,9 +163,16 @@ namespace cwt
         }
       }
     private:
-      void execute(const std::unique_ptr<stmt_t>& stmt)
+      void execute(const std::unique_ptr<stmt_t>& statement)
       {
-        stmt->accept(*this);
+        statement->accept(*this);
+      }
+      void execute(const std::vector<std::unique_ptr<stmt_t>>& statements)
+      {
+        for (const auto& s : statements)
+        {
+          s->accept(*this);
+        }
       }
 
       void execute_block(const std::vector<std::unique_ptr<stmt_t>>& statements)
@@ -159,11 +187,7 @@ namespace cwt
 
           m_env = std::make_unique<environment>();
           m_env->set_enclosing(prev.get());
-
-          for(const auto& s : statements)
-          {
-            execute(s);
-          }
+          execute(statements);
         }
         catch(const std::exception& e)
         {

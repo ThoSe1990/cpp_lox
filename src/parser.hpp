@@ -63,10 +63,39 @@ namespace cwt
       }
       std::vector<std::unique_ptr<stmt_t>> statement()
       {
-        std::vector<std::unique_ptr<stmt_t>> v;
-        if (match(token_type::PRINT)) { v.push_back(std::move(print_statement())); return v; }
+        if (match(token_type::PRINT)) 
+        {   
+          std::vector<std::unique_ptr<stmt_t>> v;
+          v.push_back(std::move(print_statement())); 
+          return v; 
+        }
+        else if (match(token_type::IF)) 
+        { 
+          std::vector<std::unique_ptr<stmt_t>> v;
+          v.push_back(std::move(if_statement())); 
+          return v;  
+        }
         else if (match(token_type::LEFT_BRACE)) { return block(); }
-        else { v.push_back(std::move(expression_statement())); return v; }
+        else 
+        { 
+          std::vector<std::unique_ptr<stmt_t>> v;
+          v.push_back(std::move(expression_statement())); 
+          return v; 
+        }
+      }
+
+      std::unique_ptr<stmt_t> if_statement()
+      {
+        consume(token_type::LEFT_PAREN, "Expect \'(\' after \'if\'.");
+        std::unique_ptr<expr_t> condition = expression();
+        consume(token_type::RIGHT_PAREN, "Expect \')\' after if condition.");
+        std::vector<std::unique_ptr<stmt_t>> then_branch = statement();
+        std::vector<std::unique_ptr<stmt_t>> else_branch{};
+        if (match(token_type::ELSE))
+        {
+          else_branch = statement();
+        }
+        return std::make_unique<stmt_if<value_t>>(std::move(condition), std::move(then_branch), std::move(else_branch));
       }
 
       std::unique_ptr<stmt_t> print_statement()
@@ -106,7 +135,7 @@ namespace cwt
 
       std::unique_ptr<expr_t> assignment()
       {
-        std::unique_ptr<expr_t> expr = equality();
+        std::unique_ptr<expr_t> expr = or_operator();
         if(match(token_type::EQUAL))
         {
           token equals = previous();
@@ -125,6 +154,30 @@ namespace cwt
         return expr;
       }
 
+      
+      std::unique_ptr<expr_t> or_operator() 
+      {
+        std::unique_ptr<expr_t> expr = and_operator();
+        while(match(token_type::OR))
+        {
+          token op = previous();
+          std::unique_ptr<expr_t> right = and_operator();
+          expr = std::make_unique<expr_logical<value_t>>(std::move(expr), op, std::move(right));
+        }
+        return std::move(expr);
+      }
+      std::unique_ptr<expr_t> and_operator() 
+      {
+        std::unique_ptr<expr_t> expr = equality();
+        while (match(token_type::AND))
+        {
+          token op = previous();
+          std::unique_ptr<expr_t> right = equality();
+          expr = std::make_unique<expr_logical<value_t>>(std::move(expr), op, std::move(right));
+        }
+        return std::move(expr);
+      }
+      
       std::unique_ptr<expr_t> equality() 
       {
         std::unique_ptr<expr_t> expr = comparison();

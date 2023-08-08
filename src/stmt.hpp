@@ -108,8 +108,8 @@ namespace cwt
     using stmt_t = std::unique_ptr<lox_statement<T>>;
     using expr_t = std::unique_ptr<lox_expression<T>>;
     
-    stmt_if(expr_t condition, stmt_t then_branch, stmt_t else_branch) 
-    : condition(condition), then_branch(then_branch), else_branch(else_branch) {}
+    stmt_if(expr_t condition, std::vector<stmt_t> then_branch, std::vector<stmt_t> else_branch) 
+    : condition(std::move(condition)), then_branch(std::move(then_branch)), else_branch(std::move(else_branch)) {}
     
     void accept( stmt_visitor<T>& v) override
     {
@@ -117,8 +117,8 @@ namespace cwt
     }
 
     expr_t condition;
-    stmt_t then_branch;
-    stmt_t else_branch;
+    std::vector<stmt_t> then_branch;
+    std::vector<stmt_t> else_branch;
   };
 
   template<typename T>
