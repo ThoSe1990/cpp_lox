@@ -43,6 +43,7 @@ namespace cwt
       void visit(const stmt_var<lox_obj>& s) override;
       void visit(const stmt_while<lox_obj>& s) override;
       void visit(const stmt_function<lox_obj>& s) override;
+      void visit(const stmt_return<lox_obj>& s) override;
 
       lox_obj visit(const expr_assign<lox_obj>& e) override;
       lox_obj visit(const expr_literal<lox_obj>& e) override;

@@ -5,6 +5,7 @@
 #include "interpreter.hpp"
 #include "lox_function.hpp"
 #include "error.hpp"
+#include "return.hpp"
 
 namespace cwt
 {
@@ -70,7 +71,15 @@ void interpreter::visit(const stmt_while<lox_obj>& s)
     execute(s.body);
   }
 }
-
+void interpreter::visit(const stmt_return<lox_obj>& s)
+{
+  lox_obj value;
+  if (s.value) 
+  {
+    value = evaluate(s.value);
+  }
+  throw lox_return(create_another(value));
+}
 
 lox_obj interpreter::visit(const expr_assign<lox_obj>& e)
 {
@@ -232,10 +241,15 @@ void interpreter::execute_block(const std::vector<stmt_t>& statements, std::uniq
     m_env->set_enclosing(prev.get());
     execute(statements);
   }
+  catch(const lox_return& e)
+  {
+    throw lox_return(e.value());
+  } 
   catch(const std::exception& e)
   {
     std::cerr << e.what() << '\n';
   }
+
 }
       
 

@@ -36,6 +36,7 @@ ${PROJECT_SOURCE_DIR}/src/interpreter.cpp
 ${PROJECT_SOURCE_DIR}/src/lox_function.cpp
 ${PROJECT_SOURCE_DIR}/src/lox_obj.cpp
 ${PROJECT_SOURCE_DIR}/src/scanner.cpp
+${PROJECT_SOURCE_DIR}/src/return.cpp
 ${PROJECT_SOURCE_DIR}/src/token.cpp
 )
 target_include_directories(${target} PRIVATE ${PROJECT_SOURCE_DIR}/src)

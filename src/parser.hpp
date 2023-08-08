@@ -1,5 +1,8 @@
 #pragma once 
 
+#include "token.hpp"
+#include "stmt.hpp"
+
 namespace cwt
 { 
   template<typename T> 
@@ -104,6 +107,12 @@ namespace cwt
           v.push_back(std::move(print_statement())); 
           return v; 
         }
+        if (match(token_type::RETURN)) 
+        {
+          std::vector<stmt_t> v;
+          v.push_back(std::move(return_statement())); 
+          return v; 
+        }
         else if (match(token_type::WHILE)) 
         { 
           std::vector<stmt_t> v;
@@ -192,6 +201,18 @@ namespace cwt
           else_branch = statement();
         }
         return std::make_unique<stmt_if<value_t>>(std::move(condition), std::move(then_branch), std::move(else_branch));
+      }
+      
+      stmt_t return_statement()
+      { 
+        token keyword = previous();
+        expr_t value;
+        if (!check(token_type::SEMICOLON)) 
+        {
+          value = expression();
+        }
+        consume(token_type::SEMICOLON, "Expect \';\' after return value.");
+        return std::make_unique<stmt_return<value_t>>(keyword, std::move(value));
       }
 
       stmt_t print_statement()

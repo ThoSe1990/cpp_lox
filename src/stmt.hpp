@@ -145,7 +145,7 @@ namespace cwt
     using expr_t = std::unique_ptr<lox_expression<T>>;
   
     stmt_return(token keyword, expr_t value) 
-    : keyword(keyword), value(value) {}
+    : keyword(keyword), value(std::move(value)) {}
     
     void accept( stmt_visitor<T>& v) override
     {
