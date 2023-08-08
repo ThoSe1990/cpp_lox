@@ -5,7 +5,7 @@ namespace cwt
 
   template<typename T> struct stmt_block;
   template<typename T> struct stmt_class;
-  template<typename T> struct stmtlox_expression;
+  template<typename T> struct stmt_expression;
   template<typename T> struct stmt_function;
   template<typename T> struct stmt_if;
   template<typename T> struct stmt_print;
@@ -19,7 +19,7 @@ namespace cwt
     virtual ~stmt_visitor() = default;
     virtual void visit(const stmt_block<T>& s) { throw std::runtime_error("stmt_visitor not implemented"); }
     virtual void visit(const stmt_class<T>& s) { throw std::runtime_error("stmt_visitor not implemented"); }
-    virtual void visit(const stmtlox_expression<T>& s) { throw std::runtime_error("stmt_visitor not implemented"); }
+    virtual void visit(const stmt_expression<T>& s) { throw std::runtime_error("stmt_visitor not implemented"); }
     virtual void visit(const stmt_function<T>& s) { throw std::runtime_error("stmt_visitor not implemented"); }
     virtual void visit(const stmt_if<T>& s) { throw std::runtime_error("stmt_visitor not implemented"); }
     virtual void visit(const stmt_print<T>& s) { throw std::runtime_error("stmt_visitor not implemented"); }
@@ -38,25 +38,25 @@ namespace cwt
   template<typename T>
   struct stmt_block : public lox_statement<T>
   {
-    using stmt_t = lox_statement<T>;
+    using stmt_t = std::unique_ptr<lox_statement<T>>;
     
-    stmt_block(const std::vector<stmt_t*>& statements) : statements(statements) {}
+    stmt_block(const std::vector<stmt_t>& statements) : statements(std::move(statements)) {}
     void accept(stmt_visitor<T>& v) override
     {
       return v.visit(*this);
     }
-    std::vector<stmt_t*> statements;
+    std::vector<stmt_t> statements;
   };
 
   template<typename T>
   struct stmt_class : public lox_statement<T>
   {
-    using stmt_t = lox_statement<T>;
-    using expr_t = lox_expression<T>;
+    using stmt_t = std::unique_ptr<lox_statement<T>>;
+    using expr_t = std::unique_ptr<lox_expression<T>>;
     using func_t = stmt_function<T>;
 
-    stmt_class(token name, expr_t* superclass, const std::vector<func_t*>& methods) 
-    : name(name), superclass(superclass), methods(methods) {}
+    stmt_class(token name, expr_t superclass, const std::vector<func_t*>& methods) 
+    : name(name), superclass(std::move(superclass)), methods(std::move(methods)) {}
 
     void accept(stmt_visitor<T>& v) override
     {
@@ -64,32 +64,32 @@ namespace cwt
     }
 
     token name;
-    expr_t* superclass; 
+    expr_t superclass; 
     std::vector<func_t*> methods;
   };
 
   template<typename T>
-  struct stmtlox_expression : public lox_statement<T>
+  struct stmt_expression : public lox_statement<T>
   {
-    using stmt_t = lox_statement<T>;
-    using expr_t = lox_expression<T>;
+    using stmt_t = std::unique_ptr<lox_statement<T>>;
+    using expr_t = std::unique_ptr<lox_expression<T>>;
 
-    stmtlox_expression(expr_t* expression) : expression(expression) {}
+    stmt_expression(expr_t expression) : expression(std::move(expression)) {}
 
     void accept( stmt_visitor<T>& v) override
     {
       return v.visit(*this);
     }
 
-    expr_t* expression;
+    expr_t expression;
   };
 
   template<typename T>
   struct stmt_function : public lox_statement<T>
   {
-    using stmt_t = lox_statement<T>;
+    using stmt_t = std::unique_ptr<lox_statement<T>>;
     
-    stmt_function(token name, const std::vector<token>& parameters, const std::vector<stmt_t*>& body) 
+    stmt_function(token name, const std::vector<token>& parameters, const std::vector<stmt_t>& body) 
     : name(name), parameters(parameters), body(body) {}
     
     void accept( stmt_visitor<T>& v) override
@@ -99,16 +99,16 @@ namespace cwt
 
     token name; 
     std::vector<token> parameters;
-    std::vector<stmt_t*> body;
+    std::vector<stmt_t> body;
   };
 
   template<typename T>
   struct stmt_if : public lox_statement<T>
   {
-    using stmt_t = lox_statement<T>;
-    using expr_t = lox_expression<T>;
+    using stmt_t = std::unique_ptr<lox_statement<T>>;
+    using expr_t = std::unique_ptr<lox_expression<T>>;
     
-    stmt_if(expr_t* condition, stmt_t* then_branch, stmt_t* else_branch) 
+    stmt_if(expr_t condition, stmt_t then_branch, stmt_t else_branch) 
     : condition(condition), then_branch(then_branch), else_branch(else_branch) {}
     
     void accept( stmt_visitor<T>& v) override
@@ -116,34 +116,34 @@ namespace cwt
       return v.visit(*this);
     }
 
-    expr_t* condition;
-    stmt_t* then_branch;
-    stmt_t* else_branch;
+    expr_t condition;
+    stmt_t then_branch;
+    stmt_t else_branch;
   };
 
   template<typename T>
   struct stmt_print : public lox_statement<T>
   {
-    using stmt_t = lox_statement<T>;
-    using expr_t = lox_expression<T>;
+    using stmt_t = std::unique_ptr<lox_statement<T>>;
+    using expr_t = std::unique_ptr<lox_expression<T>>;
     
-    stmt_print(expr_t* expression) : expression(expression) {}
+    stmt_print(expr_t expression) : expression(std::move(expression)) {}
 
     void accept( stmt_visitor<T>& v) override
     {
       return v.visit(*this);
     }
 
-    expr_t* expression;
+    expr_t expression;
   };
 
   template<typename T>
   struct stmt_return : public lox_statement<T>
   {
-    using stmt_t = lox_statement<T>;
-    using expr_t = lox_expression<T>;
+    using stmt_t = std::unique_ptr<lox_statement<T>>;
+    using expr_t = std::unique_ptr<lox_expression<T>>;
   
-    stmt_return(token keyword, expr_t* value) 
+    stmt_return(token keyword, expr_t value) 
     : keyword(keyword), value(value) {}
     
     void accept( stmt_visitor<T>& v) override
@@ -152,17 +152,17 @@ namespace cwt
     }
 
     token keyword; 
-    expr_t* value;
+    expr_t value;
 
   };
   template<typename T>
   struct stmt_var : public lox_statement<T>
   {
-    using stmt_t = lox_statement<T>;
-    using expr_t = lox_expression<T>;
+    using stmt_t = std::unique_ptr<lox_statement<T>>;
+    using expr_t = std::unique_ptr<lox_expression<T>>;
 
-    stmt_var(token name, expr_t* initializer) 
-    : name(name), initializer(initializer) {}
+    stmt_var(token name, expr_t initializer) 
+    : name(name), initializer(std::move(initializer)) {}
     
     void accept( stmt_visitor<T>& v) override
     {
@@ -170,25 +170,25 @@ namespace cwt
     }
   
     token name; 
-    expr_t* initializer;
+    expr_t initializer;
   };
 
   template<typename T>
   struct stmt_while : public lox_statement<T>
   {
-    using stmt_t = lox_statement<T>;
-    using expr_t = lox_expression<T>;
+    using stmt_t = std::unique_ptr<lox_statement<T>>;
+    using expr_t = std::unique_ptr<lox_expression<T>>;
 
-    stmt_while(expr_t* condition, stmt_t* body) 
-    : condition(condition), body(body) {}
+    stmt_while(expr_t condition, stmt_t body) 
+    : condition(std::move(condition)), body(std::move(body)) {}
     
     void accept( stmt_visitor<T>& v) override
     {
       return v.visit(*this);
     }
 
-    expr_t* condition;
-    stmt_t* body;
+    expr_t condition;
+    stmt_t body;
   };
 
 

@@ -18,11 +18,11 @@ namespace cwt
     using expr_t = lox_expression<lox_obj>;
     using stmt_t = lox_statement<lox_obj>;
     public:
-      void interpret(const std::vector<stmt_t*> statemets) 
+      void interpret(const std::vector<std::unique_ptr<stmt_t>>& statemets) 
       {
         try
         {
-          for (stmt_t* stmt : statemets)
+          for (const auto& stmt : statemets)
           {
             execute(stmt);
           }
@@ -37,7 +37,7 @@ namespace cwt
       {
         execute_block(s.statements);
       }
-      void visit(const stmtlox_expression<lox_obj>& s) override 
+      void visit(const stmt_expression<lox_obj>& s) override 
       {
         evaluate(s.expression);
       }
@@ -142,12 +142,12 @@ namespace cwt
         }
       }
     private:
-      void execute(stmt_t* stmt)
+      void execute(const std::unique_ptr<stmt_t>& stmt)
       {
         stmt->accept(*this);
       }
 
-      void execute_block(std::vector<stmt_t*> statements)
+      void execute_block(const std::vector<std::unique_ptr<stmt_t>>& statements)
       {
         std::unique_ptr<environment> prev = std::move(m_env);
         try
@@ -160,7 +160,7 @@ namespace cwt
           m_env = std::make_unique<environment>();
           m_env->set_enclosing(prev.get());
 
-          for(stmt_t* s : statements)
+          for(const auto& s : statements)
           {
             execute(s);
           }
@@ -172,7 +172,7 @@ namespace cwt
       }
       
 
-      lox_obj evaluate(expr_t* e)  
+      lox_obj evaluate(const std::unique_ptr<expr_t>& e)  
       {
         return e->accept(*this);
       }

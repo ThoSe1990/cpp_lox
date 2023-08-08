@@ -12,25 +12,30 @@ namespace cwt
     public: 
       parser(const std::vector<token>& tokens) : m_tokens(tokens) {}
 
-      std::vector<stmt_t*> parse()
+      std::vector<std::unique_ptr<stmt_t>> parse()
       {
-        std::vector<stmt_t*> statements;
+        std::vector<std::unique_ptr<stmt_t>> statements;
         while(!is_at_end())
         {
-          statements.push_back(declaration());
+          for (auto& d : declaration()) 
+          {
+            statements.push_back(std::move(d));
+          }
         }
         return statements;
       }
 
     private:
       
-      stmt_t* declaration()
+      std::vector<std::unique_ptr<stmt_t>> declaration()
       {
         try
         {
           if (match(token_type::VAR)) 
           {
-            return var_declaration();
+            std::vector<std::unique_ptr<stmt_t>> v;
+            v.push_back(std::move(var_declaration()));
+            return v;
           }
           else 
           {
@@ -41,71 +46,76 @@ namespace cwt
         {
           synchronize();
           std::cerr << e.what() << '\n';
-          return nullptr;
+          return {};
         }
       }
       
-      stmt_t* var_declaration()
+      std::unique_ptr<stmt_t> var_declaration()
       {
         token name = consume(token_type::IDENTIFIER, "Expected variable name.");
-        expr_t* initializer = nullptr;
+        std::unique_ptr<expr_t> initializer = nullptr;
         if (match(token_type::EQUAL))
         {
           initializer = expression();
         }
         consume(token_type::SEMICOLON, "Expected \';\' after variable declaration");
-        return new stmt_var<value_t>(name, initializer);
+        return std::make_unique<stmt_var<value_t>>(name, std::move(initializer));
       }
-      stmt_t* statement()
+      std::vector<std::unique_ptr<stmt_t>> statement()
       {
-        if (match(token_type::PRINT)) { return printlox_statement(); }
-        else if (match(token_type::LEFT_BRACE)) { return new stmt_block<value_t>(block()); }
-        else { return expressionlox_statement(); }
+        std::vector<std::unique_ptr<stmt_t>> v;
+        if (match(token_type::PRINT)) { v.push_back(std::move(print_statement())); return v; }
+        else if (match(token_type::LEFT_BRACE)) { return block(); }
+        else { v.push_back(std::move(expression_statement())); return v; }
       }
 
-      stmt_t* printlox_statement()
+      std::unique_ptr<stmt_t> print_statement()
       {
-        expr_t* value = expression();
+        std::unique_ptr<expr_t> value = expression();
         consume(token_type::SEMICOLON, "Expect \';\' after value.");
   
-        return new stmt_print<value_t>(value);
+        return std::make_unique<stmt_print<value_t>>(std::move(value));
       }
       
-      stmt_t* expressionlox_statement()
+      std::unique_ptr<stmt_t> expression_statement()
       {
-        expr_t* expr = expression();
+        std::unique_ptr<expr_t> expr = expression();
         consume(token_type::SEMICOLON, "Expect \';\' after expression.");
-        return new stmtlox_expression<value_t>(expr);
+        return std::make_unique<stmt_expression<value_t>>(std::move(expr));
       }
 
-      std::vector<stmt_t*> block()
+      std::vector<std::unique_ptr<stmt_t>> block()
       {
-        std::vector<stmt_t*> statements; 
+        std::vector<std::unique_ptr<stmt_t>> statements; 
 
         while (!check(token_type::RIGHT_BRACE) && !is_at_end())
         {
-          statements.push_back(declaration());
+          for (auto& d : declaration()) 
+          {
+            statements.push_back(std::move(d));
+          }
         }
         consume(token_type::RIGHT_BRACE, "Expected \'}\' after block");
         return statements;
       }
 
-      expr_t* expression() 
+      std::unique_ptr<expr_t> expression() 
       {
         return assignment();
       }
 
-      expr_t* assignment()
+      std::unique_ptr<expr_t> assignment()
       {
-        expr_t* expr = equality();
+        std::unique_ptr<expr_t> expr = equality();
         if(match(token_type::EQUAL))
         {
           token equals = previous();
-          expr_t* value = assignment();
+          std::unique_ptr<expr_t> value = assignment();
           if(expr->type() == expr_type::_variable)
           {
-            token name = static_cast<expr_variable<value_t>*>(expr)->name;
-            return new expr_assign(name,value);
+            
+            token name = static_cast<expr_variable<value_t>*>(expr.get())->name;
+            return std::make_unique<expr_assign<lox_obj>>(name, std::move(value));
           }
           else
           {
@@ -115,14 +125,14 @@ namespace cwt
         return expr;
       }
 
-      expr_t* equality() 
+      std::unique_ptr<expr_t> equality() 
       {
-        expr_t* expr = comparison();
+        std::unique_ptr<expr_t> expr = comparison();
         while (match(token_type::BANG_EQUAL, token_type::EQUAL_EQUAL))
         {
           token op = previous();
-          expr_t* right = comparison();
-          expr = new expr_binary<value_t>(expr, op, right);
+          std::unique_ptr<expr_t> right = comparison();
+          expr = std::make_unique<expr_binary<value_t>>(std::move(expr), op, std::move(right));
         }
         return expr; 
       }
@@ -175,75 +185,75 @@ namespace cwt
         return m_tokens[m_current-1];
       }
 
-      expr_t* comparison()
+      std::unique_ptr<expr_t> comparison()
       {
-        expr_t* expr = term();
+        std::unique_ptr<expr_t> expr = term();
         while(match(token_type::GREATER, token_type::GREATER_EQUAL, token_type::LESS, token_type::LESS_EQUAL))
         {
           token op = previous();
-          expr_t* right = term();
-          expr = new cwt::expr_binary<value_t>(expr, op, right);
+          std::unique_ptr<expr_t> right = term();
+          expr = std::make_unique<cwt::expr_binary<value_t>>(std::move(expr), op, std::move(right));
         }
         return expr;
       }
 
-      expr_t* term()
+      std::unique_ptr<expr_t> term()
       {
-        expr_t* expr = factor();
+        std::unique_ptr<expr_t> expr = factor();
         while(match(token_type::MINUS, token_type::PLUS))
         {
           token op = previous();
-          expr_t* right = factor();
-          expr = new expr_binary<value_t>(expr, op, right);
+          std::unique_ptr<expr_t> right = factor();
+          expr = std::make_unique<expr_binary<value_t>>(std::move(expr), op, std::move(right));
         }
         return expr; 
       }
 
-      expr_t* factor()
+      std::unique_ptr<expr_t> factor()
       {
-        expr_t* expr = unary();
+        std::unique_ptr<expr_t> expr = unary();
         while (match(token_type::SLASH, token_type::STAR))
         {
           token op = previous();
-          expr_t* right = unary();
-          expr = new expr_binary<value_t>(expr, op, right);
+          std::unique_ptr<expr_t> right = unary();
+          expr = std::make_unique<expr_binary<value_t>>(std::move(expr), op, std::move(right));
         }
         return expr; 
       }
 
-      expr_t* unary()
+      std::unique_ptr<expr_t> unary()
       {
         if (match(token_type::BANG, token_type::MINUS))
         {
           token op = previous();
-          expr_t* right = unary();
-          return new expr_unary<value_t>(op, right);
+          std::unique_ptr<expr_t> right = unary();
+          return std::make_unique<expr_unary<value_t>>(op, std::move(right));
         }
         return primary();
       }
 
-      expr_t* primary()
+      std::unique_ptr<expr_t> primary()
       {
-        if (match(token_type::FALSE)) return new expr_literal<value_t>(false);
-        if (match(token_type::TRUE)) return new expr_literal<value_t>(true);
-        if (match(token_type::NIL)) return new expr_literal<value_t>();
+        if (match(token_type::FALSE)) return std::make_unique<expr_literal<value_t>>(false);
+        if (match(token_type::TRUE)) return std::make_unique<expr_literal<value_t>>(true);
+        if (match(token_type::NIL)) return std::make_unique<expr_literal<value_t>>();
         if (match(token_type::NUMBER))
         {
-          return new expr_literal<value_t>(std::stod(previous().literal));
+          return std::make_unique<expr_literal<value_t>>(std::stod(previous().literal));
         }
         if (match(token_type::STRING))
         {
-          return new expr_literal<value_t>(previous().literal);
+          return std::make_unique<expr_literal<value_t>>(previous().literal);
         }
         if (match(token_type::IDENTIFIER))
         {
-          return new expr_variable<value_t>(previous());
+          return std::make_unique<expr_variable<value_t>>(previous());
         }
         if (match(token_type::LEFT_PAREN))
         {
-          expr_t* expr = expression();
+          std::unique_ptr<expr_t> expr = expression();
           consume(token_type::RIGHT_PAREN, "Expect: \')\' after expression.");
-          return new expr_grouping<value_t>(expr);
+          return std::make_unique<expr_grouping<value_t>>(std::move(expr));
         }
         throw std::runtime_error(error(peek(), "Expected expression."));
       }

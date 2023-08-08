@@ -50,12 +50,9 @@ namespace cwt
   template<typename T> 
   struct expr_assign : public lox_expression<T>
   {
-    using expr_t = lox_expression<T>;
-    expr_assign(token name, expr_t* value) : name(name), value(value) {}
-    ~expr_assign()  
-    {
-      if (value) {delete value;}
-    }
+    using expr_t = std::unique_ptr<lox_expression<T>>;
+    expr_assign(token name, expr_t value) : name(name), value(std::move(value)) {}
+
     expr_type type() { return expr_type::_assign; };
     T accept(expr_visitor<T>& v) override
     {
@@ -63,85 +60,71 @@ namespace cwt
     } 
 
     token name;
-    expr_t* value;
+    expr_t value;
   };
 
   template<typename T>
   struct expr_binary : public lox_expression<T>
   {
-    using expr_t = lox_expression<T>;
-    expr_binary(expr_t* left, token op, expr_t* right) : left(left), op(op), right(right) {}
-    ~expr_binary() 
-    {
-      if (left) {delete left;}
-      if (right) {delete right;}
-    }
+    using expr_t = std::unique_ptr<lox_expression<T>>;
+    expr_binary(expr_t left, token op, expr_t right) : left(std::move(left)), op(op), right(std::move(right)) {}
+
     expr_type type() { return expr_type::_binary; };
     T accept(expr_visitor<T>& v) override
     {
       return v.visit(*this);
     }
-    expr_t* left;
+    expr_t left;
     token op;
-    expr_t* right;
+    expr_t right;
   };
 
   template<typename T>
   struct expr_call : public lox_expression<T>
   {
-    using expr_t = lox_expression<T>;
-    expr_call(expr_t* callee, token paren, const std::vector<expr_t*>& args) : callee(callee), paren(paren), args(args) {}
-  	~expr_call()
-    {
-      if (callee) {delete callee;}
-      for (auto e : args) {if (e) delete e;}
-    }
+    using expr_t = std::unique_ptr<lox_expression<T>>;
+    expr_call(expr_t callee, token paren, const std::vector<expr_t>& args) : callee(std::move(callee)), paren(paren), args(std::move(args)) {}
+
     expr_type type() { return expr_type::_call; };
     T accept(expr_visitor<T>& v) override
     {
       return v.visit(*this);
     }
 
-    expr_t* callee;
+    expr_t callee;
     token paren;
-    std::vector<expr_t*> args; 
+    std::vector<expr_t> args; 
   };
 
   template<typename T>
   struct expr_get : public lox_expression<T>
   {
-    using expr_t = lox_expression<T>;
-    expr_get(expr_t* obj, token name) : obj(obj), name(name) {}
-    ~expr_get()
-    {
-      if (obj) { delete obj; }
-    }
+    using expr_t = std::unique_ptr<lox_expression<T>>;
+    expr_get(expr_t obj, token name) : obj(std::move(obj)), name(name) {}
+
     expr_type type() { return expr_type::_get; };
     T accept(expr_visitor<T>& v) override
     {
       return v.visit(*this);
     }
 
-    expr_t* obj;
+    expr_t obj;
     token name; 
   };
 
   template<typename T>
   struct expr_grouping : public lox_expression<T>
   {
-    using expr_t = lox_expression<T>;
-    expr_grouping(expr_t* expr) : expr(expr) {}
-    ~expr_grouping()  
-    {
-      if (expr) {delete expr;}
-    }
+    using expr_t = std::unique_ptr<lox_expression<T>>;
+    expr_grouping(expr_t expr) : expr(std::move(expr)) {}
+
     expr_type type() { return expr_type::_grouping; };
     T accept(expr_visitor<T>& v) override
     {
       return v.visit(*this);
     }
 
-    expr_t* expr;
+    expr_t expr;
   };
 
   template<typename T>
@@ -152,7 +135,6 @@ namespace cwt
     expr_literal(std::string v) : value(v) {}
     expr_literal() : value(lox_obj()) {}
 
-    ~expr_literal() {}
     expr_type type() { return expr_type::_literal; };
     T accept(expr_visitor<T>& v) override
     {
@@ -165,51 +147,43 @@ namespace cwt
   template<typename T>
   struct expr_logical : public lox_expression<T>
   {
-    using expr_t = lox_expression<T>;
-    expr_logical(expr_t* left, token op, expr_t* right) : left(left), op(op), right(right) {}
-    ~expr_logical() 
-    {
-      if (left) {delete left;}
-      if (right) {delete right;}
-    }
+    using expr_t = std::unique_ptr<lox_expression<T>>;
+    expr_logical(expr_t left, token op, expr_t right) : left(std::move(left)), op(op), right(std::move(right)) {}
+
     expr_type type() { return expr_type::_logical; };
     T accept(expr_visitor<T>& v) override
     {
       return v.visit(*this);
     }
 
-    expr_t* left;
+    expr_t left;
     token op;
-    expr_t* right;
+    expr_t right;
   };
 
   template<typename T>
   struct expr_set : public lox_expression<T> 
   {
-    using expr_t = lox_expression<T>;
-    expr_set(expr_t* obj, token name, expr_t* value) : obj(obj), name(name), value(value) {}
-    ~expr_set() 
-    {
-      if (obj) { delete obj; }
-      if (value) { delete value; }
-    }
+    using expr_t = std::unique_ptr<lox_expression<T>>;
+    expr_set(expr_t obj, token name, expr_t value) : obj(std::move(obj)), name(name), value(std::move(value)) {}
+
     expr_type type() { return expr_type::_set; };
     T accept(expr_visitor<T>& v) override
     {
       return v.visit(*this);
     }
 
-    expr_t* obj;
+    expr_t obj;
     token name; 
-    expr_t* value; 
+    expr_t value; 
   };
 
   template<typename T>
   struct expr_super : public lox_expression<T> 
   {
-    using expr_t = lox_expression<T>;
+    using expr_t = std::unique_ptr<lox_expression<T>>;
     expr_super(token keyword, token method) : keyword(keyword), method(method) {}
-    ~expr_super() = default;
+
     expr_type type() { return expr_type::_super; };
     T accept(expr_visitor<T>& v) override
     {
@@ -223,9 +197,9 @@ namespace cwt
   template<typename T>
   struct expr_this : public lox_expression<T> 
   {
-    using expr_t = lox_expression<T>;
+    using expr_t = std::unique_ptr<lox_expression<T>>;
     expr_this(token keyword) : keyword(keyword) {}
-    ~expr_this() = default;
+
     expr_type type() { return expr_type::_this; };
     T accept(expr_visitor<T>& v) override
     {
@@ -238,12 +212,9 @@ namespace cwt
   template<typename T>
   struct expr_unary : public lox_expression<T> 
   {
-    using expr_t = lox_expression<T>;
-    expr_unary(token op, expr_t* right) : op(op), right(right) {}
-    ~expr_unary() 
-    {
-      if (right) {delete right;}
-    }
+    using expr_t = std::unique_ptr<lox_expression<T>>;
+    expr_unary(token op, expr_t right) : op(op), right(std::move(right)) {}
+
     expr_type type() { return expr_type::_unary; };
     T accept(expr_visitor<T>& v) override
     {
@@ -251,13 +222,13 @@ namespace cwt
     }
 
     token op;
-    expr_t* right; 
+    expr_t right; 
   };
 
   template<typename T>
   struct expr_variable : public lox_expression<T> 
   {
-    using expr_t = lox_expression<T>;
+    using expr_t = std::unique_ptr<lox_expression<T>>;
     using underlying_t = T;
     expr_variable(token name) : name(name) {}
     expr_type type() { return expr_type::_variable; };

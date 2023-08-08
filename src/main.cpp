@@ -70,12 +70,11 @@ void run(const std::string& src)
   
   {
     parser<lox_obj> parser(tokens);
-    std::vector<lox_statement<lox_obj>*> statements = parser.parse(); 
+    std::vector<std::unique_ptr<lox_statement<lox_obj>>> statements = parser.parse(); 
 
     if (statements.empty() == false)
     {
-      interpreter().interpret(statements);
-      // for (auto s : statements) { if (s) delete s; }
+      interpreter().interpret(std::move(statements));
     }
   }
 

@@ -3,35 +3,16 @@ print "hello world";
 print 1+23+3;
 print 1>2;
 
-var foo = 154;
-print foo;
-
-var bar = 20;
-print -bar - -100;
-
-var baz = "some string";
-print baz + " 1846458 adsfhgdasfg ";
-
-
-baz = "hello " + "world";
-print baz;
-
 
 var a = "global a";
-print a;
-
-var num = 2;
 {
-
+  print a;
   var a = "local a";
   print a;
-  print num;
-  num = 123;
   {
-    print num;
+    print a;
     var a = "local local a";
     print a;
+    print "some more here .. " + a;
   }
 }
-
-print a;
