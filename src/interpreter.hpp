@@ -15,8 +15,8 @@ namespace cwt
 
   class interpreter : public expr_visitor<lox_obj>, public stmt_visitor<lox_obj>
   {
-    using expr_t = expression<lox_obj>;
-    using stmt_t = statement<lox_obj>;
+    using expr_t = lox_expression<lox_obj>;
+    using stmt_t = lox_statement<lox_obj>;
     public:
       void interpret(const std::vector<stmt_t*> statemets) 
       {
@@ -37,7 +37,7 @@ namespace cwt
       {
         execute_block(s.statements);
       }
-      void visit(const stmt_expression<lox_obj>& s) override 
+      void visit(const stmtlox_expression<lox_obj>& s) override 
       {
         evaluate(s.expression);
       }
@@ -124,11 +124,11 @@ namespace cwt
             return left.number() * right.number();
           break; case token_type::PLUS :
           {
-            if (left.type() == lox_obj::value_type::number && right.type() == lox_obj::value_type::number)
+            if (left.type() == value_type::number && right.type() == value_type::number)
             {
               return left.number() + right.number();
             }
-            else if (left.type() == lox_obj::value_type::string && right.type() == lox_obj::value_type::string)
+            else if (left.type() == value_type::string && right.type() == value_type::string)
             {
               std::string s = left.string();
               s.append(right.string());
@@ -182,7 +182,7 @@ namespace cwt
         {
           return false;
         }
-        else if (obj.type() == lox_obj::value_type::boolean) 
+        else if (obj.type() == value_type::boolean) 
         {
           return obj.boolean();
         }
@@ -193,21 +193,21 @@ namespace cwt
       }
       bool is_equal(const lox_obj& left, const lox_obj& right) const 
       {
-        auto both_type = [&left, &right](lox_obj::value_type t) { return left.type() == t && right.type() == t; };
+        auto both_type = [&left, &right](value_type t) { return left.type() == t && right.type() == t; };
 
         if (left.nil() && right.nil()) 
         {
           return true;
         }
-        else if (both_type(lox_obj::value_type::number))
+        else if (both_type(value_type::number))
         {
           return left.number() == right.number();
         }
-        else if (both_type(lox_obj::value_type::boolean))
+        else if (both_type(value_type::boolean))
         {
           return left.boolean() == right.boolean();
         }
-        else if (both_type(lox_obj::value_type::string))
+        else if (both_type(value_type::string))
         {
           return left.string() == right.string();
         }
@@ -219,7 +219,7 @@ namespace cwt
 
       void check_number_operand(const token& op, const lox_obj& operand) const 
       {
-        if (operand.type() == lox_obj::value_type::number) 
+        if (operand.type() == value_type::number) 
         {
           return;
         }
@@ -230,7 +230,7 @@ namespace cwt
       }
       void check_number_operand(const token& op, const lox_obj& left, const lox_obj& right) const 
       {
-        if (left.type() == lox_obj::value_type::number && right.type() == lox_obj::value_type::number) 
+        if (left.type() == value_type::number && right.type() == value_type::number) 
         {
           return;
         }

@@ -6,8 +6,8 @@ namespace cwt
   class parser
   {
     using value_t = T;
-    using expr_t = expression<value_t>;
-    using stmt_t = statement<value_t>;
+    using expr_t = lox_expression<value_t>;
+    using stmt_t = lox_statement<value_t>;
     
     public: 
       parser(const std::vector<token>& tokens) : m_tokens(tokens) {}
@@ -58,12 +58,12 @@ namespace cwt
       }
       stmt_t* statement()
       {
-        if (match(token_type::PRINT)) { return print_statement(); }
+        if (match(token_type::PRINT)) { return printlox_statement(); }
         else if (match(token_type::LEFT_BRACE)) { return new stmt_block<value_t>(block()); }
-        else { return expression_statement(); }
+        else { return expressionlox_statement(); }
       }
 
-      stmt_t* print_statement()
+      stmt_t* printlox_statement()
       {
         expr_t* value = expression();
         consume(token_type::SEMICOLON, "Expect \';\' after value.");
@@ -71,11 +71,11 @@ namespace cwt
         return new stmt_print<value_t>(value);
       }
       
-      stmt_t* expression_statement()
+      stmt_t* expressionlox_statement()
       {
         expr_t* expr = expression();
         consume(token_type::SEMICOLON, "Expect \';\' after expression.");
-        return new stmt_expression<value_t>(expr);
+        return new stmtlox_expression<value_t>(expr);
       }
 
       std::vector<stmt_t*> block()
@@ -136,8 +136,8 @@ namespace cwt
         return false;
       }
 
-      template<typename... T>
-      bool match(token_type head, T... ts)
+      template<typename... Tokens>
+      bool match(token_type head, Tokens... ts)
       {
         return match(head) ? true : match(ts...);
       }

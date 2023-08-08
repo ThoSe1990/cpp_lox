@@ -6,7 +6,7 @@ namespace cwt
   {
     public:
       ~printer() = default; 
-      void print(expression<std::string>& expr)
+      void print(lox_expression<std::string>& expr)
       {
         std:: cout<< expr.accept(*this) << std::endl;
       }
@@ -33,7 +33,7 @@ namespace cwt
 
     private:
 
-      std::string parenthesize(expression<std::string>& expr) 
+      std::string parenthesize(lox_expression<std::string>& expr) 
       {
         std::string s{' '};
         s.append(expr.accept(*this));
@@ -41,7 +41,7 @@ namespace cwt
       }
 
       template<typename... Exprs>
-      std::string parenthesize(const std::string& name, expression<std::string>& expr, Exprs&... exprs)  
+      std::string parenthesize(const std::string& name, lox_expression<std::string>& expr, Exprs&... exprs)  
       {
         std::string s{""};
         s.push_back('(');
@@ -51,7 +51,7 @@ namespace cwt
         s.push_back(')');
         return s;
       }
-      std::string parenthesize(const std::string& name, expression<std::string>& expr)  
+      std::string parenthesize(const std::string& name, lox_expression<std::string>& expr)  
       {   
         std::string s{""};
         s.push_back('(');

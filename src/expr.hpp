@@ -40,17 +40,17 @@ namespace cwt
   };
 
   template<typename T>
-  struct expression
+  struct lox_expression
   {
-    virtual ~expression() = default;
+    virtual ~lox_expression() = default;
     virtual T accept(expr_visitor<T>& v) = 0 ;
     virtual expr_type type() = 0;
   };
 
   template<typename T> 
-  struct expr_assign : public expression<T>
+  struct expr_assign : public lox_expression<T>
   {
-    using expr_t = expression<T>;
+    using expr_t = lox_expression<T>;
     expr_assign(token name, expr_t* value) : name(name), value(value) {}
     ~expr_assign()  
     {
@@ -67,9 +67,9 @@ namespace cwt
   };
 
   template<typename T>
-  struct expr_binary : public expression<T>
+  struct expr_binary : public lox_expression<T>
   {
-    using expr_t = expression<T>;
+    using expr_t = lox_expression<T>;
     expr_binary(expr_t* left, token op, expr_t* right) : left(left), op(op), right(right) {}
     ~expr_binary() 
     {
@@ -87,9 +87,9 @@ namespace cwt
   };
 
   template<typename T>
-  struct expr_call : public expression<T>
+  struct expr_call : public lox_expression<T>
   {
-    using expr_t = expression<T>;
+    using expr_t = lox_expression<T>;
     expr_call(expr_t* callee, token paren, const std::vector<expr_t*>& args) : callee(callee), paren(paren), args(args) {}
   	~expr_call()
     {
@@ -108,9 +108,9 @@ namespace cwt
   };
 
   template<typename T>
-  struct expr_get : public expression<T>
+  struct expr_get : public lox_expression<T>
   {
-    using expr_t = expression<T>;
+    using expr_t = lox_expression<T>;
     expr_get(expr_t* obj, token name) : obj(obj), name(name) {}
     ~expr_get()
     {
@@ -127,9 +127,9 @@ namespace cwt
   };
 
   template<typename T>
-  struct expr_grouping : public expression<T>
+  struct expr_grouping : public lox_expression<T>
   {
-    using expr_t = expression<T>;
+    using expr_t = lox_expression<T>;
     expr_grouping(expr_t* expr) : expr(expr) {}
     ~expr_grouping()  
     {
@@ -145,7 +145,7 @@ namespace cwt
   };
 
   template<typename T>
-  struct expr_literal : public expression<T> 
+  struct expr_literal : public lox_expression<T> 
   {
     expr_literal(bool v) : value(v) {}
     expr_literal(double v) : value(v) {}
@@ -163,9 +163,9 @@ namespace cwt
   };
 
   template<typename T>
-  struct expr_logical : public expression<T>
+  struct expr_logical : public lox_expression<T>
   {
-    using expr_t = expression<T>;
+    using expr_t = lox_expression<T>;
     expr_logical(expr_t* left, token op, expr_t* right) : left(left), op(op), right(right) {}
     ~expr_logical() 
     {
@@ -184,9 +184,9 @@ namespace cwt
   };
 
   template<typename T>
-  struct expr_set : public expression<T> 
+  struct expr_set : public lox_expression<T> 
   {
-    using expr_t = expression<T>;
+    using expr_t = lox_expression<T>;
     expr_set(expr_t* obj, token name, expr_t* value) : obj(obj), name(name), value(value) {}
     ~expr_set() 
     {
@@ -205,9 +205,9 @@ namespace cwt
   };
 
   template<typename T>
-  struct expr_super : public expression<T> 
+  struct expr_super : public lox_expression<T> 
   {
-    using expr_t = expression<T>;
+    using expr_t = lox_expression<T>;
     expr_super(token keyword, token method) : keyword(keyword), method(method) {}
     ~expr_super() = default;
     expr_type type() { return expr_type::_super; };
@@ -221,9 +221,9 @@ namespace cwt
   };
 
   template<typename T>
-  struct expr_this : public expression<T> 
+  struct expr_this : public lox_expression<T> 
   {
-    using expr_t = expression<T>;
+    using expr_t = lox_expression<T>;
     expr_this(token keyword) : keyword(keyword) {}
     ~expr_this() = default;
     expr_type type() { return expr_type::_this; };
@@ -236,9 +236,9 @@ namespace cwt
   };
 
   template<typename T>
-  struct expr_unary : public expression<T> 
+  struct expr_unary : public lox_expression<T> 
   {
-    using expr_t = expression<T>;
+    using expr_t = lox_expression<T>;
     expr_unary(token op, expr_t* right) : op(op), right(right) {}
     ~expr_unary() 
     {
@@ -255,9 +255,9 @@ namespace cwt
   };
 
   template<typename T>
-  struct expr_variable : public expression<T> 
+  struct expr_variable : public lox_expression<T> 
   {
-    using expr_t = expression<T>;
+    using expr_t = lox_expression<T>;
     using underlying_t = T;
     expr_variable(token name) : name(name) {}
     expr_type type() { return expr_type::_variable; };

@@ -20,6 +20,11 @@ if(MSVC)
     )
 endif()
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  add_compile_options(-g -O0 -fno-omit-frame-pointer -fsanitize=address,leak)
+  link_libraries(-fsanitize=address,leak)
+endif()
+
 set(target example)
 add_executable(${target} ${PROJECT_SOURCE_DIR}/src/main.cpp)
 target_include_directories(${target} PRIVATE ${PROJECT_SOURCE_DIR}/src)

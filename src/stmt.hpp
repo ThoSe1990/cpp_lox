@@ -5,7 +5,7 @@ namespace cwt
 
   template<typename T> struct stmt_block;
   template<typename T> struct stmt_class;
-  template<typename T> struct stmt_expression;
+  template<typename T> struct stmtlox_expression;
   template<typename T> struct stmt_function;
   template<typename T> struct stmt_if;
   template<typename T> struct stmt_print;
@@ -19,7 +19,7 @@ namespace cwt
     virtual ~stmt_visitor() = default;
     virtual void visit(const stmt_block<T>& s) { throw std::runtime_error("stmt_visitor not implemented"); }
     virtual void visit(const stmt_class<T>& s) { throw std::runtime_error("stmt_visitor not implemented"); }
-    virtual void visit(const stmt_expression<T>& s) { throw std::runtime_error("stmt_visitor not implemented"); }
+    virtual void visit(const stmtlox_expression<T>& s) { throw std::runtime_error("stmt_visitor not implemented"); }
     virtual void visit(const stmt_function<T>& s) { throw std::runtime_error("stmt_visitor not implemented"); }
     virtual void visit(const stmt_if<T>& s) { throw std::runtime_error("stmt_visitor not implemented"); }
     virtual void visit(const stmt_print<T>& s) { throw std::runtime_error("stmt_visitor not implemented"); }
@@ -29,16 +29,16 @@ namespace cwt
   };
 
   template<typename T>
-  struct statement
+  struct lox_statement
   {
-    virtual ~statement() = default;
+    virtual ~lox_statement() = default;
     virtual void accept(stmt_visitor<T>& v) = 0 ;
   };
 
   template<typename T>
-  struct stmt_block : public statement<T>
+  struct stmt_block : public lox_statement<T>
   {
-    using stmt_t = statement<T>;
+    using stmt_t = lox_statement<T>;
     
     stmt_block(const std::vector<stmt_t*>& statements) : statements(statements) {}
     void accept(stmt_visitor<T>& v) override
@@ -49,10 +49,10 @@ namespace cwt
   };
 
   template<typename T>
-  struct stmt_class : public statement<T>
+  struct stmt_class : public lox_statement<T>
   {
-    using stmt_t = statement<T>;
-    using expr_t = expression<T>;
+    using stmt_t = lox_statement<T>;
+    using expr_t = lox_expression<T>;
     using func_t = stmt_function<T>;
 
     stmt_class(token name, expr_t* superclass, const std::vector<func_t*>& methods) 
@@ -69,12 +69,12 @@ namespace cwt
   };
 
   template<typename T>
-  struct stmt_expression : public statement<T>
+  struct stmtlox_expression : public lox_statement<T>
   {
-    using stmt_t = statement<T>;
-    using expr_t = expression<T>;
+    using stmt_t = lox_statement<T>;
+    using expr_t = lox_expression<T>;
 
-    stmt_expression(expr_t* expression) : expression(expression) {}
+    stmtlox_expression(expr_t* expression) : expression(expression) {}
 
     void accept( stmt_visitor<T>& v) override
     {
@@ -85,9 +85,9 @@ namespace cwt
   };
 
   template<typename T>
-  struct stmt_function : public statement<T>
+  struct stmt_function : public lox_statement<T>
   {
-    using stmt_t = statement<T>;
+    using stmt_t = lox_statement<T>;
     
     stmt_function(token name, const std::vector<token>& parameters, const std::vector<stmt_t*>& body) 
     : name(name), parameters(parameters), body(body) {}
@@ -103,10 +103,10 @@ namespace cwt
   };
 
   template<typename T>
-  struct stmt_if : public statement<T>
+  struct stmt_if : public lox_statement<T>
   {
-    using stmt_t = statement<T>;
-    using expr_t = expression<T>;
+    using stmt_t = lox_statement<T>;
+    using expr_t = lox_expression<T>;
     
     stmt_if(expr_t* condition, stmt_t* then_branch, stmt_t* else_branch) 
     : condition(condition), then_branch(then_branch), else_branch(else_branch) {}
@@ -122,10 +122,10 @@ namespace cwt
   };
 
   template<typename T>
-  struct stmt_print : public statement<T>
+  struct stmt_print : public lox_statement<T>
   {
-    using stmt_t = statement<T>;
-    using expr_t = expression<T>;
+    using stmt_t = lox_statement<T>;
+    using expr_t = lox_expression<T>;
     
     stmt_print(expr_t* expression) : expression(expression) {}
 
@@ -138,10 +138,10 @@ namespace cwt
   };
 
   template<typename T>
-  struct stmt_return : public statement<T>
+  struct stmt_return : public lox_statement<T>
   {
-    using stmt_t = statement<T>;
-    using expr_t = expression<T>;
+    using stmt_t = lox_statement<T>;
+    using expr_t = lox_expression<T>;
   
     stmt_return(token keyword, expr_t* value) 
     : keyword(keyword), value(value) {}
@@ -156,10 +156,10 @@ namespace cwt
 
   };
   template<typename T>
-  struct stmt_var : public statement<T>
+  struct stmt_var : public lox_statement<T>
   {
-    using stmt_t = statement<T>;
-    using expr_t = expression<T>;
+    using stmt_t = lox_statement<T>;
+    using expr_t = lox_expression<T>;
 
     stmt_var(token name, expr_t* initializer) 
     : name(name), initializer(initializer) {}
@@ -174,10 +174,10 @@ namespace cwt
   };
 
   template<typename T>
-  struct stmt_while : public statement<T>
+  struct stmt_while : public lox_statement<T>
   {
-    using stmt_t = statement<T>;
-    using expr_t = expression<T>;
+    using stmt_t = lox_statement<T>;
+    using expr_t = lox_expression<T>;
 
     stmt_while(expr_t* condition, stmt_t* body) 
     : condition(condition), body(body) {}

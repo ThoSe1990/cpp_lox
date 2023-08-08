@@ -2,13 +2,64 @@
 
 namespace cwt
 {
+  enum class value_type
+  {
+    nil = 0, number, string, boolean
+  };
+
+  template<typename T>
+  struct _model_helper {
+    T m_value;
+
+    _model_helper(T const& value) : m_value(value) {}
+    value_type type() const noexcept { return value_type::nil; }
+    std::string to_string() const noexcept { return "nil"; }
+    double number() const { throw std::runtime_error("lox object does not hold a number"); }
+    bool boolean() const { throw std::runtime_error("lox object does not hold a bool"); }
+    std::string string() const { throw std::runtime_error("lox object does not hold a string"); }
+  };
+
+  template<>
+  struct _model_helper<bool> {
+    bool m_value;
+
+    _model_helper(bool const& value) : m_value(value) {}
+    value_type type() const noexcept { return value_type::boolean; }
+    std::string to_string() const noexcept { return std::to_string(m_value); }
+    double number() const { throw std::runtime_error("lox object does not hold a number"); }
+    bool boolean() const { return m_value; }
+    std::string string() const { throw std::runtime_error("lox object does not hold a string"); }
+  };
+
+  template<>
+  struct _model_helper<double> {
+    double m_value;
+
+    _model_helper(double const& value) : m_value(value) {}
+    value_type type() const noexcept { return value_type::number; }
+    std::string to_string() const noexcept { return std::to_string(m_value); }
+    double number() const { return m_value; }
+    bool boolean() const { throw std::runtime_error("lox object does not hold a bool"); }
+    std::string string() const { throw std::runtime_error("lox object does not hold a string"); }
+  };
+
+  template<>
+  struct _model_helper<std::string> {
+    std::string m_value;
+
+    _model_helper(std::string const& value) : m_value(value) {}
+    value_type type() const noexcept { return value_type::string; }
+    std::string to_string() const noexcept { return m_value; }
+    double number() const { throw std::runtime_error("lox object does not hold a number"); }
+    bool boolean() const { throw std::runtime_error("lox object does not hold a bool"); }
+    std::string string() const { return m_value; }
+  };
+
+
   class lox_obj 
   {
     public:
-      enum class value_type
-      {
-        nil = 0, number, string, boolean
-      };
+ 
       
       lox_obj() : m_nil(true) {}
 
@@ -69,6 +120,7 @@ namespace cwt
       }
 
   private:   
+
       struct _concept {
           virtual ~_concept() {}
           virtual value_type type() const noexcept { return value_type::nil; };
@@ -79,38 +131,19 @@ namespace cwt
       };
 
       template<typename T>
-      struct _model : public _concept 
+      struct _model : public _concept
       {
-          _model(T const& value) : m_value(value) {};
-          T m_value;
+        _model_helper<T> helper;
+
+        _model(T const& value) : helper(value) {}
+        value_type type() const noexcept override { return helper.type(); }
+        std::string to_string() const noexcept override { return helper.to_string(); }
+        double number() const override { return helper.number(); }
+        bool boolean() const override { return helper.boolean(); }
+        std::string string() const override { return helper.string(); }
       };
 
-    template<>
-    struct _model<bool> : public _concept {
-        _model(bool const& value) : m_value(value) {}
-        value_type type() const noexcept override { return value_type::boolean; };
-        std::string to_string() const noexcept override { return std::to_string(m_value); };
-        bool boolean() const override { return m_value; };
-        bool m_value;
-    };
-    template<>
-    struct _model<double> : public _concept {
-        _model(double const& value) : m_value(value) {}
-        value_type type() const noexcept override { return value_type::number; };
-        std::string to_string() const noexcept override { return std::to_string(m_value); };
-        double number() const override { return m_value; };
-        double m_value;
-    };
-    template<>
-    struct _model<std::string> : public _concept {
-        _model(std::string const& value) : m_value(value) {}
-        value_type type() const noexcept override { return value_type::string; };
-        std::string to_string() const noexcept override { return m_value; };
-        std::string string() const override { return m_value; };
-        std::string m_value;
-    };
-
-  private:
+    private:
       bool m_nil;
       std::unique_ptr<_concept> m_value;
   };
@@ -119,9 +152,9 @@ namespace cwt
   {
     switch (old.type())
     {
-    case lox_obj::value_type::boolean: return old.boolean();
-    break; case lox_obj::value_type::number: return old.number();
-    break; case lox_obj::value_type::string: return old.string();
+    case value_type::boolean: return old.boolean();
+    break; case value_type::number: return old.number();
+    break; case value_type::string: return old.string();
     default: return lox_obj(); // creates nil 
     }
   }
